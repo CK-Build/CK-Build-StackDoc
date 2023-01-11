@@ -7,4 +7,12 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="CK.Monitoring" Version="17.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CK.Readus\CK.Readus.csproj" />
+    </ItemGroup>
+
 </Project>
