@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CK.Readus", "CK.Readus\CK.Readus.csproj", "{98A6A6E5-242B-4C30-B5E6-8F08B343C543}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CK.Readus.Demo", "CK.Readus.Demo\CK.Readus.Demo.csproj", "{05457BCE-99D6-4DA3-9E53-43B6841336B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CK.Readus.Tests", "Tests\CK.Readus.Tests\CK.Readus.Tests.csproj", "{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{98A6A6E5-242B-4C30-B5E6-8F08B343C543}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98A6A6E5-242B-4C30-B5E6-8F08B343C543}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98A6A6E5-242B-4C30-B5E6-8F08B343C543}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98A6A6E5-242B-4C30-B5E6-8F08B343C543}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05457BCE-99D6-4DA3-9E53-43B6841336B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05457BCE-99D6-4DA3-9E53-43B6841336B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05457BCE-99D6-4DA3-9E53-43B6841336B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05457BCE-99D6-4DA3-9E53-43B6841336B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
