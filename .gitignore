@@ -1,6 +1,11 @@
 bin/
 obj/
 /packages/
+
 riderModule.iml
 /_ReSharper.Caches/
 .idea/
+CK.Readus.sln.DotSettings.user
+
+Tests/CK.Readus.Tests/Logs
+Tests/CK.Readus.Tests/In/Temp/
