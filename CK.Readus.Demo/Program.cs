@@ -4,22 +4,36 @@ using CK.Core;
 using CK.Monitoring;
 using CK.Monitoring.Handlers;
 using CK.Readus;
-using Console = System.Console;
 
-var grandOutputConfiguration = new GrandOutputConfiguration().AddHandler( new ConsoleConfiguration() );
-GrandOutput.EnsureActiveDefault( grandOutputConfiguration );
-
-var monitor = new ActivityMonitor();
-
-var path = @"C:\Users\Aymeric.Richard\Downloads\CK-Core-develop";
-
-var crawler = new DocumentationCrawler();
-var files = crawler.GetMarkdownFiles( monitor, path ).ToArray();
-
-Console.WriteLine( $"{files.Length} md files :" );
-foreach( var file in files )
+public static class Program
 {
-    Console.WriteLine( file );
-}
+    public static void Main( string[] args )
+    {
+        var grandOutputConfiguration = new GrandOutputConfiguration().AddHandler( new ConsoleConfiguration() );
+        GrandOutput.EnsureActiveDefault( grandOutputConfiguration );
 
-Console.ReadKey();
+        var monitor = new ActivityMonitor();
+
+        if( args.Length == 0 )
+        {
+            monitor.Error( "First parameter missing : Provide an input folder please." );
+            return;
+        }
+
+        var inputFolder = args[0];
+        string outputFolder;
+
+        if (args.Length == 1)
+        {
+            outputFolder = inputFolder + "_output";
+            monitor.Info( $"Output folder not provided, using ${outputFolder}." );
+        }
+        else outputFolder = args[1];
+
+        var factory = new RepositoryDocumentationReader();
+        var info = factory.ReadPath( monitor, inputFolder, string.Empty );
+
+        info.EnsureLinks( monitor );
+        info.Generate( monitor, outputFolder );
+    }
+}

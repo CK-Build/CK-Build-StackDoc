@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Aymeric": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Aymeric.Richard\\Downloads\\CK-Core-develop\" \"C:\\Users\\Aymeric.Richard\\Downloads\\CK-Core-develop-Output\""
+    }
+  }
+}
