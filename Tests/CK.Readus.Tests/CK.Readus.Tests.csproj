@@ -18,4 +18,8 @@
       <ProjectReference Include="..\..\CK.Readus\CK.Readus.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="In\FooBarFakeRepo" />
+    </ItemGroup>
+
 </Project>
