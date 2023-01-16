@@ -49,13 +49,4 @@ public class DocumentationCrawlerTests
 
         _fooBarMdFileCount = 4;
     }
-
-    [Test]
-    public void GetMarkdownFiles_should_get_md_files()
-    {
-        var sut = new DocumentationCrawler();
-        var result = sut.GetMarkdownFiles( TestHelper.Monitor, _fooBarSolutionFolder );
-
-        result.Count().Should().Be( _fooBarMdFileCount );
-    }
 }

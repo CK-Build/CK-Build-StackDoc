@@ -81,7 +81,13 @@ hello [link](linkToSomething).
     [Test]
     public void TransformLinks_FooBarFakeRepo()
     {
-        var text = File.ReadAllText( TestHelper.TestProjectFolder.AppendPart( "IN" ).AppendPart( "FooBarFakeRepo" ).AppendPart( "README.md" ) );
+        var text = File.ReadAllText
+        (
+            TestHelper.TestProjectFolder
+                      .AppendPart( "IN" )
+                      .AppendPart( "FooBarFakeRepo" )
+                      .AppendPart( "README.md" )
+        );
 
         var md = Markdown.Parse( text );
 

@@ -32,6 +32,9 @@ public class MarkdownDocumentWrapper
         foreach( var link in FindLinks() )
         {
             check( monitor, link.Url );
+            //TODO: Here we may want to expose the LinkInline as it contains informations about the link.
+            // For example, we may need the text related to this link.
+            // It also contains info like IsImage.
         }
     }
 
