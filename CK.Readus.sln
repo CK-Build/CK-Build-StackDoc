@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CK.Readus.Tests", "Tests\CK
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{D43E62B2-1C98-4E4D-9ECF-F20165E4F297}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeCakeBuilder", "CodeCakeBuilder\CodeCakeBuilder.csproj", "{86283812-B3C5-4A8F-9CD3-9A9C02C663AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86283812-B3C5-4A8F-9CD3-9A9C02C663AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86283812-B3C5-4A8F-9CD3-9A9C02C663AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86283812-B3C5-4A8F-9CD3-9A9C02C663AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86283812-B3C5-4A8F-9CD3-9A9C02C663AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A25AD1BC-10E2-4CDC-8FFD-1E8063165D44} = {D43E62B2-1C98-4E4D-9ECF-F20165E4F297}
