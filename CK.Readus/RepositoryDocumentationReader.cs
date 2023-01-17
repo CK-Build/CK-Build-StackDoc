@@ -25,6 +25,7 @@ public class RepositoryDocumentationReader
             "*.md",
             new EnumerationOptions { RecurseSubdirectories = true }
         );
+        //TODO: what about built things. Like under node_modules.
 
         var documentationFiles = new Dictionary<NormalizedPath, MarkdownDocumentWrapper>( filesPaths.Length );
 

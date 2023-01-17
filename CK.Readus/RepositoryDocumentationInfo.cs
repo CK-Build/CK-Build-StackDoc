@@ -44,6 +44,8 @@ public class RepositoryDocumentationInfo
     /// <param name="outputPath"></param>
     public void Generate( IActivityMonitor monitor, NormalizedPath outputPath )
     {
+        monitor.Trace( $"Writing {RepositoryName} documentation to {outputPath}" );
+
         NormalizedPath ResolvePath( NormalizedPath file )
         {
             var parts = file.Parts;
@@ -58,11 +60,10 @@ public class RepositoryDocumentationInfo
         //TODO: Maybe it should check existence only.
         Directory.CreateDirectory( outputPath );
 
-        foreach( var file in DocumentationFiles )
+        foreach( var (sourcePath, markdown) in DocumentationFiles )
         {
-            var html = file.Value.MarkdownDocument.ToHtml();
-
-            var path = ResolvePath( file.Key );
+            var html = markdown.MarkdownDocument.ToHtml();
+            var path = ResolvePath( sourcePath );
 
             Directory.CreateDirectory( path.RemoveLastPart() );
             File.WriteAllText( path, html );
