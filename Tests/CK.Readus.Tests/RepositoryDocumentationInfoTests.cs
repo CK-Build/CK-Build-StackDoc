@@ -37,4 +37,38 @@ public class RepositoryDocumentationInfoTests
         Directory.CreateDirectory( outputFolder );
         sut.Generate( TestHelper.Monitor, outputFolder );
     }
+
+    [Test]
+    public void Generate_should_output_html()
+    {
+        var repositoryName = "TheMightyProject";
+        var tempPath = TestHelper.TestProjectFolder
+                                 .AppendPart( "In" )
+                                 .AppendPart( "Temp" )
+                                 .AppendPart( repositoryName );
+
+        Directory.CreateDirectory( tempPath );
+        File.WriteAllText( tempPath.AppendPart( "README.md" ), "# Nothing" );
+
+        var factory = new RepositoryDocumentationReader();
+        var remoteUrl = string.Empty;
+        var rootPath = tempPath;
+
+        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl );
+
+        var outputFolder = TestHelper.TestProjectFolder
+                                     .AppendPart( "OUT" )
+                                     .AppendPart( repositoryName + "_generated" );
+        // Directory.CreateDirectory( outputFolder );
+        TestHelper.CleanupFolder( outputFolder );
+        sut.Generate( TestHelper.Monitor, outputFolder );
+
+        var expectedPath = outputFolder
+                           .AppendPart( repositoryName )
+                           .AppendPart( "README.html" );
+        File.Exists( expectedPath ).Should().BeTrue();
+
+        var content = File.ReadAllText( expectedPath );
+        content.Trim().Should().Be( "<h1>Nothing</h1>" );
+    }
 }

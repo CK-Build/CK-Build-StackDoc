@@ -38,7 +38,7 @@ public class RepositoryDocumentationInfo
     }
 
     /// <summary>
-    /// Output the current state of the documentation.
+    /// Output the current state of the documentation as html.
     /// </summary>
     /// <param name="monitor"></param>
     /// <param name="outputPath"></param>
@@ -53,10 +53,12 @@ public class RepositoryDocumentationInfo
             var path = outputPath;
             foreach( var part in relativePath ) path = path.AppendPart( part );
 
+            var lastPart = path.LastPart.Replace( ".md", ".html" );
+            path = path.RemoveLastPart().AppendPart( lastPart );
+
             return path;
         }
 
-        //TODO: Extension should be html
         //TODO: Maybe it should check existence only.
         Directory.CreateDirectory( outputPath );
 
