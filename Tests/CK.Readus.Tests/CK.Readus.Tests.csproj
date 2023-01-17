@@ -19,6 +19,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="In\**"/>
+      <Compile Remove="In\**" />
     </ItemGroup>
 </Project>
