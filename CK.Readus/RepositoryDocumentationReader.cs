@@ -18,6 +18,8 @@ public class RepositoryDocumentationReader
     {
         Throw.CheckArgument( !rootPath.IsEmptyPath );
 
+        monitor.Info( $"Read repository {rootPath}" );
+
         var repositoryName = rootPath.LastPart;
         var filesPaths = Directory.GetFiles
         (
@@ -31,11 +33,12 @@ public class RepositoryDocumentationReader
 
         foreach( var file in filesPaths )
         {
+            monitor.Trace( $"Add {file}" );
             documentationFiles.Add( file, MarkdownDocumentWrapper.Load( file ) );
         }
 
-        monitor.Trace( $"Repository \"{repositoryName}\" at location {rootPath} contains {filesPaths.Length} md Files." );
+        monitor.Info( $"Repository \"{repositoryName}\" at location {rootPath} contains {filesPaths.Length} md Files." );
 
-        return new RepositoryDocumentationInfo( repositoryName, rootPath, remoteUrl, documentationFiles );
+        return new RepositoryDocumentationInfo( repositoryName, remoteUrl, rootPath, documentationFiles );
     }
 }

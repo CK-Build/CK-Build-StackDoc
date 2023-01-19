@@ -1,7 +1,11 @@
 ﻿namespace CK.Readus.Tests;
 
-public class StackDocumentationInfoTests
+[TestFixtureSource( nameof( FlipFlags ) )]
+public class StackDocumentationInfoTests : TestBase
 {
+    /// <inheritdoc />
+    public StackDocumentationInfoTests( bool flag ) : base( flag ) { }
+
     [SetUp]
     public void SetUp()
     {

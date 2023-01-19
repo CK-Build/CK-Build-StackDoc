@@ -1,6 +1,6 @@
-﻿using CK.Core;
+﻿using System.Threading.Tasks.Dataflow;
+using CK.Core;
 using Markdig;
-using Markdig.Syntax;
 
 namespace CK.Readus;
 
@@ -28,12 +28,14 @@ public class RepositoryDocumentationInfo
         DocumentationFiles = documentationFiles;
     }
 
-    public void EnsureLinks( IActivityMonitor monitor )
+    public void EnsureLinks( IActivityMonitor monitor, bool dryRun = false )
     {
         foreach( var file in DocumentationFiles )
         {
+            monitor.Trace( $"Check links in file {file.Key}" );
             file.Value.CheckLinks( monitor, Check );
-            file.Value.TransformLinks( monitor, Transform );
+            monitor.Trace( $"Transform links in file {file.Key}" );
+            file.Value.TransformLinks( monitor, Transform, dryRun );
         }
     }
 
@@ -75,16 +77,50 @@ public class RepositoryDocumentationInfo
     private void Check( IActivityMonitor monitor, NormalizedPath link )
     {
         monitor.Trace( $"Check {link}" );
-        if( link.IsEmptyPath ) monitor.Trace( "Empty link" );
-        if( link.IsRooted ) monitor.Trace( "Rooted" );
+        if( link.IsEmptyPath ) monitor.Trace( "Is empty link" );
+        monitor.Trace( link.IsRooted ? "Is rooted link" : "Is not rooted link" );
         //TODO: check when the link has no attached text (so is useless).
     }
 
     private NormalizedPath Transform( IActivityMonitor monitor, NormalizedPath link )
     {
         var transformed = link;
+        if( IsOur( transformed ) ) //TODO: in case of a stack, this has to be changed
+        {
+            var extension = Path.GetExtension( transformed.LastPart );
+            if( extension.Equals( ".md" ) )
+            {
+                transformed = Path.ChangeExtension( transformed, ".html" );
+            }
+
+            #region WIP
+
+            if( FeatureFlag.TransformAlwaysReturnAbsolutePath is false )
+            {
+                // Make the link relative to the repository root.
+                transformed = transformed.RemoveFirstPart( RootPath.Parts.Count );
+            }
+
+            #endregion
+        }
+
         monitor.Trace( $"Transform {link} into {transformed}" );
         return transformed;
         //TODO: A link to a directory should be mapped to README.md in this directory
+    }
+
+    /// <summary>
+    /// Determine if the link target is a file from our system.
+    /// </summary>
+    /// <param name="link">Absolute link to a file.</param>
+    /// <exception cref="ArgumentException"></exception>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    private bool IsOur( NormalizedPath link )
+    {
+        if( link.IsRelative() ) throw new ArgumentException( "Expects absolute path", nameof( link ) );
+
+        return File.Exists( link )
+            && link.StartsWith( RootPath );
     }
 }
