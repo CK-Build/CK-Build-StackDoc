@@ -85,6 +85,10 @@ public class RepositoryDocumentationInfo
     private NormalizedPath Transform( IActivityMonitor monitor, NormalizedPath link )
     {
         var transformed = link;
+
+        // TODO: a link to a directory should try look for a README.md file.
+        // if( Directory.Exists( link.LastPart ) ) ;
+
         if( IsOur( transformed ) ) //TODO: in case of a stack, this has to be changed
         {
             var extension = Path.GetExtension( transformed.LastPart );

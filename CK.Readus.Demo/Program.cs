@@ -30,6 +30,8 @@ public static class Program
         }
         else outputFolder = args[1];
 
+        //TODO: cleanup output folder.
+
         var factory = new RepositoryDocumentationReader();
         var info = factory.ReadPath( monitor, inputFolder, string.Empty );
 
