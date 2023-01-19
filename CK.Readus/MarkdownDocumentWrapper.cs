@@ -113,7 +113,8 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
                 // This is probably enough in order to test if the NormalizedPath is rooted.
                 var isRelativeToThisFile = url.StartsWith( Directory ) is false;
                 if( url.IsRelative() && isRelativeToThisFile )
-                    url = Directory.Combine( url.ResolveDots() );
+                    url = Directory.Combine( url ).ResolveDots();
+                //TODO: Resolving dot is a good idea ? Is it only style ?
             }
 
             var link = new MarkdownBoundLink( url, linkInline );

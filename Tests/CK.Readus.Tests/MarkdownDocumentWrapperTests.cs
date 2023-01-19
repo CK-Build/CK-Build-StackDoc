@@ -129,4 +129,38 @@ hello [link](linkToSomething).
         transformedLinks[1].Url.Should().Be( new NormalizedPath( "./Project/README.md/AddedPart" ).ResolveDots() );
         transformedLinks[2].Url.Should().Be( new NormalizedPath( "./Project/Code.cs/AddedPart" ).ResolveDots() );
     }
+
+    [Test]
+    public void TransformLinks_should_handle_links_with_dots()
+    {
+        // Here we expect a full path because this is the only possible resolution when the scope is 1 file.
+        // If we were working in a repository, the expected result would be relative,
+        // if both file are in the repository indeed.
+        var expected = new NormalizedPath
+        (
+            @"C:\Users\Aymeric.Richard\Downloads\CK-Core-develop\CK.Core\ServiceContainer\SimpleServiceContainer.cs"
+        );
+
+        var text = @"
+[click](../ServiceContainer/SimpleServiceContainer.cs)
+";
+        var md = Markdown.Parse( text );
+
+        var virtualFile = "C:/Users/Aymeric.Richard/Downloads/CK-Core-develop/CK.Core/AutomaticDI/README.md";
+        var sut = new MarkdownDocumentWrapper( md, virtualFile );
+
+        NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
+        {
+            var transformed = path;
+
+            transformed.Should().Be( expected );
+
+            monitor.Trace( $"Transform {path} into {transformed}" );
+            return transformed;
+        }
+
+        sut.TransformLinks( TestHelper.Monitor, Do );
+
+        sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( expected );
+    }
 }
