@@ -16,6 +16,8 @@ namespace CK.Readus.Tests
         [TestCase( "B", "Project/A/B/C/D", "../Project/A/B/C/D" )]
         [TestCase( "A/B/C", "C/D", "../../../C/D" )]
         [TestCase( "B", "Project/A/B/C/B/D", "../Project/A/B/C/B/D" )]
+        [TestCase( "Project", "Project/../B", "../B" )]
+        [TestCase( "Project", "../Project/../B", "../../B" )]
         public void CreateRelative_experiments( string sourceString, string targetString, string expectedString )
         {
             var source = new NormalizedPath( sourceString );
@@ -47,7 +49,15 @@ namespace CK.Readus.Tests
 
                 var result = "";
                 for( var i = 0; i < moveUpBy; i++ ) result += "../";
-                return new NormalizedPath( result ).Combine( target );
+
+                // if target start with dots, needs to block
+                var rootPartCount = moveUpBy;
+                foreach( var targetPart in target.Parts )
+                {
+                    if( targetPart.Equals( ".." ) ) rootPartCount++;
+                    else break;
+                }
+                return new NormalizedPath( result ).Combine( target ).ResolveDots( rootPartCount );
             }
 
             throw new NotImplementedException();
