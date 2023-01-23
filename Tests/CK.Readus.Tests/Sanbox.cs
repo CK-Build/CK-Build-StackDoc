@@ -143,5 +143,69 @@ namespace CK.Readus.Tests
 
             return sequence;
         }
+
+        #region NormalizedPath Testing
+
+        [Test]
+        public void with_issue()
+        {
+            var folder = TestHelper.TestProjectFolder
+                                   .AppendPart( "In" )
+                                   .AppendPart( "Temp" );
+
+            var tildeRelativePath = new NormalizedPath( "~MyDir" );
+            var tildeAbsolutePath = folder.AppendPart( tildeRelativePath );
+
+
+            Directory.SetCurrentDirectory( folder );
+            TestHelper.CleanupFolder( tildeRelativePath );
+            Directory.CreateDirectory( tildeRelativePath );
+            Directory.Exists( tildeRelativePath ).Should().BeTrue();
+            Directory.SetCurrentDirectory( TestHelper.TestProjectFolder );
+            tildeRelativePath.IsRooted.Should().BeTrue(); // It says rooted
+            Directory.Exists( tildeRelativePath ).Should().BeFalse(); // But is not. The current root is different
+            Directory.Exists( tildeAbsolutePath ).Should().BeTrue();
+        }
+
+        [Test]
+        public void without_issue()
+        {
+            var folder = TestHelper.TestProjectFolder
+                                   .AppendPart( "In" )
+                                   .AppendPart( "Temp" );
+
+            var tildeRelativePath = new NormalizedPath( "./~MyDir" ).ResolveDots();
+            var tildeAbsolutePath = folder.AppendPart( tildeRelativePath );
+
+
+            Directory.SetCurrentDirectory( folder );
+            TestHelper.CleanupFolder( tildeRelativePath );
+            Directory.CreateDirectory( tildeRelativePath );
+            Directory.Exists( tildeRelativePath ).Should().BeTrue();
+            Directory.SetCurrentDirectory( TestHelper.TestProjectFolder );
+            tildeRelativePath.IsRooted.Should().BeFalse(); // It says not rooted
+            Directory.Exists( tildeRelativePath ).Should().BeFalse(); // Same as before but is ok !
+            Directory.Exists( tildeAbsolutePath ).Should().BeTrue();
+        }
+
+        [Test]
+        public void issue_more_clear()
+        {
+            var tildeRelativePath = new NormalizedPath( "./~MyDir" ).ResolveDots();
+            tildeRelativePath.IsRooted.Should().BeFalse();
+            var rooted = new NormalizedPath( tildeRelativePath );
+            rooted.IsRooted.Should().BeTrue();
+        }
+
+        [Test]
+        public void issue_more_clear_withoutResolveDots()
+        {
+            var tildeRelativePath = new NormalizedPath( "./~MyDir" );
+            tildeRelativePath.IsRooted.Should().BeFalse();
+            var rooted = new NormalizedPath( tildeRelativePath );
+            rooted.IsRooted.Should().BeFalse();
+        }
+
+        #endregion
     }
 }
