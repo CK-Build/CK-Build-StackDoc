@@ -26,13 +26,7 @@ namespace CK.Readus.Tests
             string expectedString
         )
         {
-            var source = new NormalizedPath( sourceString );
-            var target = new NormalizedPath( targetString );
-            var expected = new NormalizedPath( expectedString );
-
-            CreateRelative( source, target ).Should().Be( expected );
-            source.Path.Should().Be( new NormalizedPath( sourceString ) );
-            target.Path.Should().Be( new NormalizedPath( targetString ) );
+            CreateRelativeTester( sourceString, targetString, expectedString );
         }
 
         [Test]
@@ -51,6 +45,11 @@ namespace CK.Readus.Tests
             string targetString,
             string expectedString
         )
+        {
+            CreateRelativeTester( sourceString, targetString, expectedString );
+        }
+
+        private static void CreateRelativeTester( string sourceString, string targetString, string expectedString )
         {
             var source = new NormalizedPath( sourceString );
             var target = new NormalizedPath( targetString );
