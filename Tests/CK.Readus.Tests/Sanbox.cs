@@ -18,6 +18,7 @@ namespace CK.Readus.Tests
         [TestCase( "B", "Project/A/B/C/B/D", "../Project/A/B/C/B/D" )]
         [TestCase( "Project", "Project/../B", "../B" )]
         [TestCase( "Project", "../Project/../B", "../../B" )]
+        [TestCase( "./~user/Pictures", "./~user/Documents/A", @"../Documents/A" )]
         public void CreateRelative_experiments_relative_relative
         (
             string sourceString,
@@ -38,6 +39,12 @@ namespace CK.Readus.Tests
         [TestCase( "/", "/", "" )]
         [TestCase( "/root/Project/A/B/C", "/root/Project/A/", "../.." )]
         [TestCase( "/root/Project/A/B/C", "/root/tcejorP/A/", "../../../../tcejorP/A" )]
+        [TestCase( "//root/Project/A/B/C", "//root/tcejorP/A/", "../../../../tcejorP/A" )]
+        [TestCase( @"\\root\Project\A\B\C", @"\\root\tcejorP\A\", @"..\..\..\..\tcejorP\A" )]
+        [TestCase( @"\root\Project\A\B\C", @"\root\tcejorP\A\", @"..\..\..\..\tcejorP\A" )]
+        [TestCase ( "https://github.com/Invenietis/CK-Core", "https://github.com/Invenietis/CK-Core/tree/develop/CK.Core", @"tree/develop/CK.Core" )]
+        [TestCase( "~/Pictures", "~/Documents/A", @"../Documents/A" )]
+        [TestCase( "~user/Pictures", "~user/Documents/A", @"../Documents/A" )]
         public void CreateRelative_experiments_absolute_absolute
         (
             string sourceString,
@@ -56,18 +63,24 @@ namespace CK.Readus.Tests
 
         static NormalizedPath CreateRelative( NormalizedPath source, NormalizedPath target )
         {
+            NormalizedPath ReturnProxy( NormalizedPath toReturn )
+            {
+                Debug.Assert( toReturn.IsRelative(), "toReturn.IsRelative()" );
+                return toReturn;
+            }
+
             // if( source.IsRooted || target.IsRooted ) throw new NotImplementedException();
 
-            if( source.Equals( target ) ) return "";
+            if( source.Equals( target ) ) return ReturnProxy( "" );
 
-            if( target.StartsWith( source ) ) return target.RemoveFirstPart( source.Parts.Count );
+            if( target.StartsWith( source ) ) return ReturnProxy( target.RemoveFirstPart( source.Parts.Count ) );
             if( source.StartsWith( target ) )
             {
                 var moveUpBy = source.Parts.Count - target.Parts.Count;
                 var result = "";
                 for( var i = 0; i < moveUpBy; i++ ) result += "../";
 
-                return result;
+                return ReturnProxy( result );
             }
 
             {
@@ -81,7 +94,7 @@ namespace CK.Readus.Tests
                 if( source.IsRelative() && target.IsRelative() )
                 {
                     // it is handled up there
-                    Debug.Assert( commonStartPartCount.Equals( 0 ), "commonStartPartCount.Equals( 0 )" );
+                    // Debug.Assert( commonStartPartCount.Equals( 0 ), "commonStartPartCount.Equals( 0 )" );
                 }
 
                 var moveUpBy = source.Parts.Count - commonStartPartCount;
@@ -102,12 +115,13 @@ namespace CK.Readus.Tests
                 // It removes a root (that become unneeded) if any.
                 var suffix = target.RemovePrefix( target.RemoveLastPart( target.Parts.Count - commonStartPartCount ) );
 
-                return new NormalizedPath( result )
-                       .Combine( suffix )
-                       .ResolveDots( rootPartCount );
+                return ReturnProxy
+                (
+                    new NormalizedPath( result )
+                        .Combine( suffix )
+                        .ResolveDots( rootPartCount )
+                );
             }
-
-            throw new NotImplementedException();
         }
 
         [Test]
