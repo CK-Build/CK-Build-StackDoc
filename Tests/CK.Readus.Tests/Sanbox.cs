@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
 using CK.Core;
 
 namespace CK.Readus.Tests
@@ -18,19 +18,45 @@ namespace CK.Readus.Tests
         [TestCase( "B", "Project/A/B/C/B/D", "../Project/A/B/C/B/D" )]
         [TestCase( "Project", "Project/../B", "../B" )]
         [TestCase( "Project", "../Project/../B", "../../B" )]
-        public void CreateRelative_experiments( string sourceString, string targetString, string expectedString )
+        public void CreateRelative_experiments_relative_relative
+        (
+            string sourceString,
+            string targetString,
+            string expectedString
+        )
         {
             var source = new NormalizedPath( sourceString );
             var target = new NormalizedPath( targetString );
             var expected = new NormalizedPath( expectedString );
 
-            // PathDifference( source, target, true ).Should().Be( expected );
             CreateRelative( source, target ).Should().Be( expected );
+            source.Path.Should().Be( new NormalizedPath( sourceString ) );
+            target.Path.Should().Be( new NormalizedPath( targetString ) );
+        }
+
+        [Test]
+        [TestCase( "/", "/", "" )]
+        [TestCase( "/root/Project/A/B/C", "/root/Project/A/", "../.." )]
+        [TestCase( "/root/Project/A/B/C", "/root/tcejorP/A/", "../../../../tcejorP/A" )]
+        public void CreateRelative_experiments_absolute_absolute
+        (
+            string sourceString,
+            string targetString,
+            string expectedString
+        )
+        {
+            var source = new NormalizedPath( sourceString );
+            var target = new NormalizedPath( targetString );
+            var expected = new NormalizedPath( expectedString );
+
+            CreateRelative( source, target ).Should().Be( expected );
+            source.Path.Should().Be( new NormalizedPath( sourceString ) );
+            target.Path.Should().Be( new NormalizedPath( targetString ) );
         }
 
         static NormalizedPath CreateRelative( NormalizedPath source, NormalizedPath target )
         {
-            if( source.IsRooted || target.IsRooted ) throw new NotImplementedException();
+            // if( source.IsRooted || target.IsRooted ) throw new NotImplementedException();
 
             if( source.Equals( target ) ) return "";
 
@@ -45,7 +71,20 @@ namespace CK.Readus.Tests
             }
 
             {
-                var moveUpBy = source.Parts.Count;
+                // If rooted, stop move up on common root
+                var commonStartPartCount = 0;
+                while( source.Parts[commonStartPartCount] == target.Parts[commonStartPartCount] )
+                {
+                    commonStartPartCount++;
+                }
+
+                if( source.IsRelative() && target.IsRelative() )
+                {
+                    // it is handled up there
+                    Debug.Assert( commonStartPartCount.Equals( 0 ), "commonStartPartCount.Equals( 0 )" );
+                }
+
+                var moveUpBy = source.Parts.Count - commonStartPartCount;
 
                 var result = "";
                 for( var i = 0; i < moveUpBy; i++ ) result += "../";
@@ -57,12 +96,18 @@ namespace CK.Readus.Tests
                     if( targetPart.Equals( ".." ) ) rootPartCount++;
                     else break;
                 }
-                return new NormalizedPath( result ).Combine( target ).ResolveDots( rootPartCount );
+
+                // The result has to be a relative path. Knowing this :
+                // Here we remove the common part from both path to create the suffix of the path.
+                // It removes a root (that become unneeded) if any.
+                var suffix = target.RemovePrefix( target.RemoveLastPart( target.Parts.Count - commonStartPartCount ) );
+
+                return new NormalizedPath( result )
+                       .Combine( suffix )
+                       .ResolveDots( rootPartCount );
             }
 
             throw new NotImplementedException();
-
-            return target;
         }
 
         [Test]
@@ -83,6 +128,7 @@ namespace CK.Readus.Tests
 
         NormalizedPath GetCommonParts( NormalizedPath source, NormalizedPath target )
         {
+            // I thought it was needed, but is not. It is not finished even if all tests pass.
             if( source.Equals( target ) ) return source;
 
             var sequence = new NormalizedPath();
