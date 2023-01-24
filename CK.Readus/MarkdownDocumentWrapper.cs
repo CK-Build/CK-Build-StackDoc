@@ -29,12 +29,16 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         MarkdownDocument = markdownDocument;
         OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
 
-        MarkdownBoundLinks = FindLinks();
+        MarkdownBoundLinks = MarkdownDocument
+                             .Descendants()
+                             .OfType<LinkInline>()
+                             .Select( linkInline => new MarkdownBoundLink( this, linkInline ) )
+                             .ToList();
     }
 
     public static MarkdownDocumentWrapper Load( NormalizedPath path )
     {
-        Debug.Assert( path.IsRooted );
+        Debug.Assert( path.IsRooted , "path.IsRooted");
 
         var text = File.ReadAllText( path );
         var md = Markdown.Parse( text );
@@ -47,7 +51,7 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         Action<IActivityMonitor, NormalizedPath> check
     )
     {
-        foreach( var link in FindLinks( ) )
+        foreach( var link in MarkdownBoundLinks )
         {
             check( monitor, link.RootedPath );
             //TODO: Here we may want to expose the LinkInline as it contains information about the link.
@@ -63,9 +67,9 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         bool dryRun = false
     )
     {
-        foreach( var link in FindLinks() )
+        foreach( var link in MarkdownBoundLinks )
         {
-            Debug.Assert( link.RootedPath.IsRooted, "link.RootedPath.IsAbsolute()" );
+            Debug.Assert( link.RootedPath.IsRooted, "link.RootedPath.IsRooted" );
             var transformed = transform( monitor, link.RootedPath );
 
             #region WIP
@@ -103,20 +107,5 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
 
             link.MarkdownReference.Url = transformed;
         }
-    }
-
-    private IReadOnlyList<MarkdownBoundLink> FindLinks()
-    {
-        var links = new List<MarkdownBoundLink>();
-
-        foreach( var markdownObject in MarkdownDocument.Descendants() )
-        {
-            if( markdownObject is not LinkInline linkInline ) continue;
-
-            var link = new MarkdownBoundLink( this, linkInline );
-            links.Add( link );
-        }
-
-        return links;
     }
 }
