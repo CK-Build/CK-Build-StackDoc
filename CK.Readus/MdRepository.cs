@@ -4,7 +4,7 @@ using Markdig;
 
 namespace CK.Readus;
 
-public class RepositoryDocumentationInfo
+public class MdRepository
 {
     public string RepositoryName { get; }
 
@@ -12,17 +12,17 @@ public class RepositoryDocumentationInfo
 
     public NormalizedPath RemoteUrl { get; }
 
-    public StackDocumentationInfo Parent { get; }
+    public MdStack Parent { get; }
 
     // TODO: this could be readonly dictionary ?
-    public Dictionary<NormalizedPath, MarkdownDocumentWrapper> DocumentationFiles { get; }
+    public Dictionary<NormalizedPath, MdDocument> DocumentationFiles { get; }
 
-    public RepositoryDocumentationInfo
+    public MdRepository
     (
         string repositoryName,
         NormalizedPath remoteUrl,
         NormalizedPath rootPath,
-        Dictionary<NormalizedPath, MarkdownDocumentWrapper> documentationFiles
+        Dictionary<NormalizedPath, MdDocument> documentationFiles
     )
     {
         RepositoryName = repositoryName;

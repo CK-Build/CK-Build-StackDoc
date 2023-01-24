@@ -3,17 +3,17 @@ using CK.Core;
 
 namespace CK.Readus;
 
-public class StackDocumentationInfo
+public class MdStack
 {
     public MdContext Parent { get; }
 
     /// <summary>
     /// Key is repository name
     /// </summary>
-    public IDictionary<string, RepositoryDocumentationInfo> Repositories { get; }
+    public IDictionary<string, MdRepository> Repositories { get; }
     public string StackName { get; }
 
-    public StackDocumentationInfo( IDictionary<string, RepositoryDocumentationInfo> repositories, string stackName )
+    public MdStack( IDictionary<string, MdRepository> repositories, string stackName )
     {
         Repositories = repositories;
         StackName = stackName;

@@ -6,10 +6,10 @@ using Markdig.Syntax.Inlines;
 namespace CK.Readus.Tests;
 
 [TestFixtureSource( nameof( FlipFlags ) )]
-public class MarkdownDocumentWrapperTests : TestBase
+public class MdDocumentTests : TestBase
 {
     /// <inheritdoc />
-    public MarkdownDocumentWrapperTests( bool flag ) : base( flag ) { }
+    public MdDocumentTests( bool flag ) : base( flag ) { }
 
     [Test]
     public void CheckLinks_should_run_action_on_every_link()
@@ -21,7 +21,7 @@ hello [link](linkToSomething).
 ";
         var md = Markdown.Parse( text );
 
-        var sut = new MarkdownDocumentWrapper( md, "virtualPath" );
+        var sut = new MdDocument( md, "virtualPath" );
 
         var hasBeenCalled = false;
 
@@ -46,7 +46,7 @@ hello [link](linkToSomething).
 ";
         var md = Markdown.Parse( text );
 
-        var sut = new MarkdownDocumentWrapper( md, "VirtualPath" );
+        var sut = new MdDocument( md, "VirtualPath" );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -74,7 +74,7 @@ hello [link](linkToSomething).
                                .AppendPart( "FooBarFakeRepo" )
                                .AppendPart( "README.md" );
 
-        var sut = MarkdownDocumentWrapper.Load( mdPath );
+        var sut = MdDocument.Load( mdPath );
 
         var calls = 0;
 
@@ -99,7 +99,7 @@ hello [link](linkToSomething).
 
         var calls = 0;
 
-        var sut = MarkdownDocumentWrapper.Load( mdPath );
+        var sut = MdDocument.Load( mdPath );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -147,7 +147,7 @@ hello [link](linkToSomething).
         var md = Markdown.Parse( text );
 
         var virtualFile = "C:/Users/Aymeric.Richard/Downloads/CK-Core-develop/CK.Core/AutomaticDI/README.md";
-        var sut = new MarkdownDocumentWrapper( md, virtualFile );
+        var sut = new MdDocument( md, virtualFile );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {

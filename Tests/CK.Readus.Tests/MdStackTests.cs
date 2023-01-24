@@ -1,10 +1,10 @@
 ﻿namespace CK.Readus.Tests;
 
 [TestFixtureSource( nameof( FlipFlags ) )]
-public class StackDocumentationInfoTests : TestBase
+public class MdStackTests : TestBase
 {
     /// <inheritdoc />
-    public StackDocumentationInfoTests( bool flag ) : base( flag ) { }
+    public MdStackTests( bool flag ) : base( flag ) { }
 
     [SetUp]
     public void SetUp()
@@ -38,8 +38,8 @@ public class StackDocumentationInfoTests : TestBase
                 .Select( p => basePath.AppendPart( p ) )
                 .ToArray();
 
-        var repositoryFactory = new RepositoryDocumentationReader();
-        var repositories = new Dictionary<string, RepositoryDocumentationInfo>();
+        var repositoryFactory = new MdRepositoryReader();
+        var repositories = new Dictionary<string, MdRepository>();
 
         foreach( var repoPath in repoPaths )
         {
@@ -47,7 +47,7 @@ public class StackDocumentationInfoTests : TestBase
             repositories.Add( repo.RepositoryName ,repo );
         }
 
-        var sut = new StackDocumentationInfo( repositories, name );
+        var sut = new MdStack( repositories, name );
 
         var outputPath = TestHelper.TestProjectFolder
                                    .AppendPart( "OUT" )

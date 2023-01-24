@@ -5,11 +5,11 @@ using Markdig.Syntax;
 namespace CK.Readus;
 
 /// <summary>
-/// Factory for <see cref="RepositoryDocumentationInfo"/>.
+/// Factory for <see cref="MdRepository"/>.
 /// </summary>
-public class RepositoryDocumentationReader
+public class MdRepositoryReader
 {
-    public RepositoryDocumentationInfo ReadPath
+    public MdRepository ReadPath
     (
         IActivityMonitor monitor,
         NormalizedPath rootPath,
@@ -29,16 +29,16 @@ public class RepositoryDocumentationReader
         );
         //TODO: what about built things. Like under node_modules.
 
-        var documentationFiles = new Dictionary<NormalizedPath, MarkdownDocumentWrapper>( filesPaths.Length );
+        var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
 
         foreach( var file in filesPaths )
         {
             monitor.Trace( $"Add {file}" );
-            documentationFiles.Add( file, MarkdownDocumentWrapper.Load( file ) );
+            documentationFiles.Add( file, MdDocument.Load( file ) );
         }
 
         monitor.Info( $"Repository \"{repositoryName}\" at location {rootPath} contains {filesPaths.Length} md Files." );
 
-        return new RepositoryDocumentationInfo( repositoryName, remoteUrl, rootPath, documentationFiles );
+        return new MdRepository( repositoryName, remoteUrl, rootPath, documentationFiles );
     }
 }

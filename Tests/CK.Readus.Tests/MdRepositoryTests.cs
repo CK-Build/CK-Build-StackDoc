@@ -5,10 +5,10 @@ using Markdig.Syntax.Inlines;
 namespace CK.Readus.Tests;
 
 [TestFixtureSource( nameof( FlipFlags ) )]
-public class RepositoryDocumentationInfoTests : TestBase
+public class MdRepositoryTests : TestBase
 {
     /// <inheritdoc />
-    public RepositoryDocumentationInfoTests( bool flag ) : base( flag ) { }
+    public MdRepositoryTests( bool flag ) : base( flag ) { }
 
     [SetUp]
     public void SetUp()
@@ -26,7 +26,7 @@ public class RepositoryDocumentationInfoTests : TestBase
     [Test]
     public void Generate_does_not_throw()
     {
-        var factory = new RepositoryDocumentationReader();
+        var factory = new MdRepositoryReader();
         var remoteUrl = string.Empty;
         var repositoryName = "FooBarFakeRepo";
         var rootPath = TestHelper.TestProjectFolder
@@ -58,7 +58,7 @@ public class RepositoryDocumentationInfoTests : TestBase
         Directory.CreateDirectory( tempPath );
         File.WriteAllText( tempPath.AppendPart( "README.md" ), "# Nothing" );
 
-        var factory = new RepositoryDocumentationReader();
+        var factory = new MdRepositoryReader();
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
@@ -103,7 +103,7 @@ Thanks for the click !
         File.WriteAllText( tempPath.AppendPart( "README.md" ), mdText );
         File.WriteAllText( tempPath.AppendPart( "clickMe.md" ), mdTextClickMe );
 
-        var factory = new RepositoryDocumentationReader();
+        var factory = new MdRepositoryReader();
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 

@@ -32,7 +32,7 @@ public static class Program
 
         //TODO: cleanup output folder.
 
-        var factory = new RepositoryDocumentationReader();
+        var factory = new MdRepositoryReader();
         var info = factory.ReadPath( monitor, inputFolder, string.Empty );
 
         info.EnsureLinks( monitor );

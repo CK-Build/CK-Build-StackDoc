@@ -6,7 +6,7 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus;
 
-public class MarkdownDocumentWrapper // MarkdownDocumentHolder
+public class MdDocument
 {
     public MarkdownDocument MarkdownDocument { get; }
     public NormalizedPath OriginPath { get; }
@@ -22,10 +22,10 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
     /// </summary>
     public string DocumentName => Path.GetFileNameWithoutExtension( OriginPath.LastPart );
 
-    public RepositoryDocumentationInfo Parent { get; }
-    public IReadOnlyList<MarkdownBoundLink> MarkdownBoundLinks { get; }
+    public MdRepository Parent { get; }
+    public IReadOnlyList<MdBoundLink> MarkdownBoundLinks { get; }
 
-    internal MarkdownDocumentWrapper( MarkdownDocument markdownDocument, NormalizedPath path )
+    internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path )
     {
         MarkdownDocument = markdownDocument;
         OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
@@ -33,17 +33,17 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         MarkdownBoundLinks = MarkdownDocument
                              .Descendants()
                              .OfType<LinkInline>()
-                             .Select( linkInline => new MarkdownBoundLink( this, linkInline ) )
+                             .Select( linkInline => new MdBoundLink( this, linkInline ) )
                              .ToList();
     }
 
-    public static MarkdownDocumentWrapper Load( NormalizedPath path )
+    public static MdDocument Load( NormalizedPath path )
     {
         Debug.Assert( path.IsRooted , "path.IsRooted");
 
         var text = File.ReadAllText( path );
         var md = Markdown.Parse( text );
-        return new MarkdownDocumentWrapper( md, path );
+        return new MdDocument( md, path );
     }
 
     public void CheckLinks

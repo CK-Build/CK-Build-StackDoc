@@ -3,9 +3,9 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus;
 
-public class MarkdownBoundLink
+public class MdBoundLink
 {
-    public MarkdownDocumentWrapper Parent { get; }
+    public MdDocument Parent { get; }
 
     /// <summary>
     /// Raw path found in markdown
@@ -26,22 +26,22 @@ public class MarkdownBoundLink
 
     public LinkInline MarkdownReference { get; }
 
-    public MarkdownBoundLink( MarkdownDocumentWrapper markdownDocumentWrapper, LinkInline markdownReference )
+    public MdBoundLink( MdDocument mdDocument, LinkInline markdownReference )
     {
         MarkdownReference = markdownReference;
-        Parent = markdownDocumentWrapper;
+        Parent = mdDocument;
 
         OriginPath = new NormalizedPath( MarkdownReference.Url );
 
         if( OriginPath.IsEmptyPath ) throw new NotImplementedException( "A null link could maybe be deleted" );
 
         // This is probably enough in order to test if the NormalizedPath is rooted.
-        var originIsNotBoundToMdDocument = OriginPath.StartsWith( markdownDocumentWrapper.Directory ) is false;
+        var originIsNotBoundToMdDocument = OriginPath.StartsWith( mdDocument.Directory ) is false;
 
         if( OriginPath.IsRooted )
             RootedPath = new NormalizedPath( OriginPath );
         else if( originIsNotBoundToMdDocument )
-            RootedPath = markdownDocumentWrapper.Directory.Combine( OriginPath ).ResolveDots();
+            RootedPath = mdDocument.Directory.Combine( OriginPath ).ResolveDots();
         else throw new NotImplementedException( $"Cannot determine a root for {OriginPath}" );
     }
 }
