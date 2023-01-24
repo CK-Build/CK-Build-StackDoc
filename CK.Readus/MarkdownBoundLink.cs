@@ -30,16 +30,18 @@ public class MarkdownBoundLink
         MarkdownReference = markdownReference;
         Parent = markdownDocumentWrapper;
 
-        var url = new NormalizedPath( MarkdownReference.Url );
-        OriginPath = url;
+        OriginPath = new NormalizedPath( MarkdownReference.Url );
 
         if( OriginPath.IsEmptyPath ) throw new NotImplementedException( "A null link could maybe be deleted" );
 
         // This is probably enough in order to test if the NormalizedPath is rooted.
         var originIsNotBoundToMdDocument = OriginPath.StartsWith( markdownDocumentWrapper.Directory ) is false;
-        if( OriginPath.IsRelative() && originIsNotBoundToMdDocument )
-            RootedPath = markdownDocumentWrapper.Directory.Combine( url ).ResolveDots();
-        //TODO: Resolving dot is a good idea ? Is it only style ?
+
+        if( OriginPath.IsRooted )
+            RootedPath = new NormalizedPath( OriginPath );
+        else if( originIsNotBoundToMdDocument )
+            RootedPath = markdownDocumentWrapper.Directory.Combine( OriginPath ).ResolveDots();
+        else throw new NotImplementedException( $"Cannot determine a root for {OriginPath}" );
     }
 }
 
