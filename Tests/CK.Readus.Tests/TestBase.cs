@@ -3,9 +3,8 @@
 public class TestBase
 {
     // ReSharper disable once MemberCanBeProtected.Global
-    public TestBase( bool flag )
+    public TestBase(  )
     {
-        FeatureFlag.TransformAlwaysReturnAbsolutePath = flag;
     }
 
     public static bool[] FlipFlags() => new[] { true, false };

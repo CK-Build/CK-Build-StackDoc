@@ -1,11 +1,7 @@
 ﻿namespace CK.Readus.Tests;
 
-[TestFixtureSource( nameof( FlipFlags ) )]
 public class MdStackTests : TestBase
 {
-    /// <inheritdoc />
-    public MdStackTests( bool flag ) : base( flag ) { }
-
     [SetUp]
     public void SetUp()
     {

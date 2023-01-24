@@ -39,7 +39,7 @@ public class MdDocument
 
     public static MdDocument Load( NormalizedPath path )
     {
-        Debug.Assert( path.IsRooted , "path.IsRooted");
+        Debug.Assert( path.IsRooted, "path.IsRooted" );
 
         var text = File.ReadAllText( path );
         var md = Markdown.Parse( text );
@@ -72,37 +72,16 @@ public class MdDocument
         {
             Debug.Assert( link.RootedPath.IsRooted, "link.RootedPath.IsRooted" );
             var transformed = transform( monitor, link.RootedPath );
+            // I'm not sure this is true but I keep it for now.
+            Debug.Assert( transformed.IsRooted, "transformed.IsRooted" );
 
-            #region WIP
-
-            if( FeatureFlag.TransformAlwaysReturnAbsolutePath )
+            if( transformed.StartsWith( Directory ) )
             {
-                if( transformed.StartsWith( Directory ) )
-                {
-                    // If the link get out of the scope with some ../../../ or else, we may be doomed.
-                    var relativeLinkPath = transformed.RemoveFirstPart( Directory.Parts.Count );
-                    transformed = relativeLinkPath;
-                }
+                // If the link get out of the scope with some ../../../ or else, we may be doomed.
+                var relativeLinkPath = transformed.RemoveFirstPart( Directory.Parts.Count );
+                transformed = relativeLinkPath;
             }
-            else
-            {
-                if( transformed.IsRelative() )
-                {
-                    for( var i = 1; i <= Directory.Parts.Count; i++ )
-                    {
-                        var endOfDirectory = Directory.Parts.TakeLast( i );
-                        var startOfTransformed = transformed.Parts.Take( i );
-
-                        if( endOfDirectory.SequenceEqual( startOfTransformed ) is false ) continue;
-                        // both represent the file path relative from the repo
-                        var relativeLinkPath = transformed.RemoveFirstPart( i );
-                        transformed = relativeLinkPath;
-                        break;
-                    }
-                }
-            }
-
-            #endregion
+            else if( transformed.IsRelative() ) { }
 
             if( dryRun ) continue;
 

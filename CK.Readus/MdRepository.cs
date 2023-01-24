@@ -87,7 +87,7 @@ public class MdRepository
 
     private NormalizedPath Transform( IActivityMonitor monitor, NormalizedPath link )
     {
-        var transformed = link;
+        var transformed = new NormalizedPath( link );
 
         // TODO: a link to a directory should try look for a README.md file.
         // if( Directory.Exists( link.LastPart ) ) ;
@@ -99,16 +99,6 @@ public class MdRepository
             {
                 transformed = Path.ChangeExtension( transformed, ".html" );
             }
-
-            #region WIP
-
-            if( FeatureFlag.TransformAlwaysReturnAbsolutePath is false )
-            {
-                // Make the link relative to the repository root.
-                transformed = transformed.RemoveFirstPart( RootPath.Parts.Count );
-            }
-
-            #endregion
         }
 
         monitor.Trace( $"Transform {link} into {transformed}" );
@@ -123,6 +113,7 @@ public class MdRepository
     /// <exception cref="ArgumentException"></exception>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
+    [Obsolete( "This implementation is wrong" )]
     private bool IsOur( NormalizedPath link )
     {
         if( link.IsRelative() ) throw new ArgumentException( "Expects absolute path", nameof( link ) );

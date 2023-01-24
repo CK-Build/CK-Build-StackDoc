@@ -4,12 +4,8 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus.Tests;
 
-[TestFixtureSource( nameof( FlipFlags ) )]
 public class MdRepositoryTests : TestBase
 {
-    /// <inheritdoc />
-    public MdRepositoryTests( bool flag ) : base( flag ) { }
-
     [SetUp]
     public void SetUp()
     {

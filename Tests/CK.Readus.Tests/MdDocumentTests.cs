@@ -5,12 +5,8 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus.Tests;
 
-[TestFixtureSource( nameof( FlipFlags ) )]
 public class MdDocumentTests : TestBase
 {
-    /// <inheritdoc />
-    public MdDocumentTests( bool flag ) : base( flag ) { }
-
     [Test]
     public void CheckLinks_should_run_action_on_every_link()
     {
@@ -51,11 +47,6 @@ hello [link](linkToSomething).
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
             var transformed = path.AppendPart( "AddedPart" );
-
-            if( FeatureFlag.TransformAlwaysReturnAbsolutePath is false )
-            {
-                transformed = transformed.RemoveFirstPart( new NormalizedPath( Path.GetFullPath( "." ) ).Parts.Count );
-            }
 
             monitor.Trace( $"Transform {path} into {transformed}" );
             return transformed;
@@ -105,14 +96,6 @@ hello [link](linkToSomething).
         {
             calls++;
             var transformed = path.AppendPart( "AddedPart" );
-            if( File.Exists( transformed.RemoveLastPart() ) && transformed.StartsWith( mdPath.RemoveLastPart() ) )
-            {
-                if( FeatureFlag.TransformAlwaysReturnAbsolutePath is false )
-                {
-                    // Make the link relative to the repository root.
-                    transformed = transformed.RemoveFirstPart( mdPath.RemoveLastPart().Parts.Count );
-                }
-            }
 
             monitor.Trace( $"Transform {path} into {transformed}" );
             return transformed;
