@@ -17,11 +17,19 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
     /// <returns></returns>
     public NormalizedPath Directory => OriginPath.RemoveLastPart();
 
-    public MarkdownDocumentWrapper( MarkdownDocument markdownDocument, NormalizedPath path )
+    /// <summary>
+    /// File name without extension
+    /// </summary>
+    public string DocumentName => Path.GetFileNameWithoutExtension( OriginPath.LastPart );
+
+    public IReadOnlyList<MarkdownBoundLink> MarkdownBoundLinks { get; }
+
+    internal MarkdownDocumentWrapper( MarkdownDocument markdownDocument, NormalizedPath path )
     {
         MarkdownDocument = markdownDocument;
         OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
-        // This ctor may be internal (visible to tests) to ensure the MarkdownDocument is correctly parsed
+
+        MarkdownBoundLinks = FindLinks();
     }
 
     public static MarkdownDocumentWrapper Load( NormalizedPath path )
@@ -39,10 +47,10 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         Action<IActivityMonitor, NormalizedPath> check
     )
     {
-        foreach( var link in FindLinks( false ) ) // TODO: do i want an absolute link here or the original link ?
+        foreach( var link in FindLinks( ) )
         {
-            check( monitor, link.Url );
-            //TODO: Here we may want to expose the LinkInline as it contains informations about the link.
+            check( monitor, link.RootedPath );
+            //TODO: Here we may want to expose the LinkInline as it contains information about the link.
             // For example, we may need the text related to this link.
             // It also contains info like IsImage.
         }
@@ -55,10 +63,10 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         bool dryRun = false
     )
     {
-        foreach( var link in FindLinks( true ) )
+        foreach( var link in FindLinks() )
         {
-            Debug.Assert( link.Url.IsAbsolute(), "link.Url.IsAbsolute()" );
-            var transformed = transform( monitor, link.Url );
+            Debug.Assert( link.RootedPath.IsRooted, "link.RootedPath.IsAbsolute()" );
+            var transformed = transform( monitor, link.RootedPath );
 
             #region WIP
 
@@ -80,7 +88,7 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
                         var endOfDirectory = Directory.Parts.TakeLast( i );
                         var startOfTransformed = transformed.Parts.Take( i );
 
-                        if( endOfDirectory.Equals( startOfTransformed ) is false ) continue;
+                        if( endOfDirectory.SequenceEqual( startOfTransformed ) is false ) continue;
                         // both represent the file path relative from the repo
                         var relativeLinkPath = transformed.RemoveFirstPart( i );
                         transformed = relativeLinkPath;
@@ -97,7 +105,7 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         }
     }
 
-    private IEnumerable<MarkdownBoundLink> FindLinks( bool makeAbsolute )
+    private IReadOnlyList<MarkdownBoundLink> FindLinks()
     {
         var links = new List<MarkdownBoundLink>();
 
@@ -105,34 +113,10 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
         {
             if( markdownObject is not LinkInline linkInline ) continue;
 
-            var url = new NormalizedPath( linkInline.Url );
-            if( url.IsEmptyPath ) throw new NotImplementedException( "A null link could maybe be deleted" );
-
-            if( makeAbsolute )
-            {
-                // This is probably enough in order to test if the NormalizedPath is rooted.
-                var isRelativeToThisFile = url.StartsWith( Directory ) is false;
-                if( url.IsRelative() && isRelativeToThisFile )
-                    url = Directory.Combine( url ).ResolveDots();
-                //TODO: Resolving dot is a good idea ? Is it only style ?
-            }
-
-            var link = new MarkdownBoundLink( url, linkInline );
+            var link = new MarkdownBoundLink( this, linkInline );
             links.Add( link );
         }
 
         return links;
-    }
-
-    private class MarkdownBoundLink
-    {
-        public MarkdownBoundLink( NormalizedPath url, LinkInline markdownReference )
-        {
-            Url = url;
-            MarkdownReference = markdownReference;
-        }
-
-        public NormalizedPath Url { get; }
-        public LinkInline MarkdownReference { get; }
     }
 }
