@@ -1,13 +1,19 @@
-﻿using CK.Core;
+﻿using System.Collections;
+using CK.Core;
 
 namespace CK.Readus;
 
 public class StackDocumentationInfo
 {
-    public IEnumerable<RepositoryDocumentationInfo> Repositories { get; }
+    public MdContext Parent { get; }
+
+    /// <summary>
+    /// Key is repository name
+    /// </summary>
+    public IDictionary<string, RepositoryDocumentationInfo> Repositories { get; }
     public string StackName { get; }
 
-    public StackDocumentationInfo( IEnumerable<RepositoryDocumentationInfo> repositories, string stackName )
+    public StackDocumentationInfo( IDictionary<string, RepositoryDocumentationInfo> repositories, string stackName )
     {
         Repositories = repositories;
         StackName = stackName;
@@ -19,7 +25,7 @@ public class StackDocumentationInfo
 
         foreach( var repository in Repositories )
         {
-            repository.Generate( monitor, outputPath );
+            repository.Value.Generate( monitor, outputPath );
         }
     }
 }

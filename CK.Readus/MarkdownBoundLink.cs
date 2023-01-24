@@ -21,6 +21,7 @@ public class MarkdownBoundLink
     /// Current result.
     /// Transformations applied.
     /// </summary>
+    [Obsolete("Not Implemented")]
     public NormalizedPath Current { get; set; }
 
     public LinkInline MarkdownReference { get; }

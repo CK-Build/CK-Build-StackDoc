@@ -12,6 +12,9 @@ public class RepositoryDocumentationInfo
 
     public NormalizedPath RemoteUrl { get; }
 
+    public StackDocumentationInfo Parent { get; }
+
+    // TODO: this could be readonly dictionary ?
     public Dictionary<NormalizedPath, MarkdownDocumentWrapper> DocumentationFiles { get; }
 
     public RepositoryDocumentationInfo

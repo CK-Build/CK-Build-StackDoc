@@ -22,6 +22,7 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
     /// </summary>
     public string DocumentName => Path.GetFileNameWithoutExtension( OriginPath.LastPart );
 
+    public RepositoryDocumentationInfo Parent { get; }
     public IReadOnlyList<MarkdownBoundLink> MarkdownBoundLinks { get; }
 
     internal MarkdownDocumentWrapper( MarkdownDocument markdownDocument, NormalizedPath path )

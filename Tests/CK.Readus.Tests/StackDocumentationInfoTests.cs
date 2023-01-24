@@ -39,12 +39,12 @@ public class StackDocumentationInfoTests : TestBase
                 .ToArray();
 
         var repositoryFactory = new RepositoryDocumentationReader();
-        var repositories = new List<RepositoryDocumentationInfo>();
+        var repositories = new Dictionary<string, RepositoryDocumentationInfo>();
 
         foreach( var repoPath in repoPaths )
         {
             var repo = repositoryFactory.ReadPath( TestHelper.Monitor, repoPath, string.Empty );
-            repositories.Add( repo );
+            repositories.Add( repo.RepositoryName ,repo );
         }
 
         var sut = new StackDocumentationInfo( repositories, name );
