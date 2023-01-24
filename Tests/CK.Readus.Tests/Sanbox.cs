@@ -29,6 +29,7 @@ namespace CK.Readus.Tests
             CreateRelativeTester( sourceString, targetString, expectedString );
         }
 
+        // @formatter:off
         [Test]
         [TestCase( "/", "/", "" )]
         [TestCase( "/root/Project/A/B/C", "/root/Project/A/", "../.." )]
@@ -39,6 +40,7 @@ namespace CK.Readus.Tests
         [TestCase ( "https://github.com/Invenietis/CK-Core", "https://github.com/Invenietis/CK-Core/tree/develop/CK.Core", @"tree/develop/CK.Core" )]
         [TestCase( "~/Pictures", "~/Documents/A", @"../Documents/A" )]
         [TestCase( "~user/Pictures", "~user/Documents/A", @"../Documents/A" )]
+        // @formatter:on
         public void CreateRelative_experiments_absolute_absolute
         (
             string sourceString,
@@ -48,6 +50,30 @@ namespace CK.Readus.Tests
         {
             CreateRelativeTester( sourceString, targetString, expectedString );
         }
+
+        // @formatter:off
+        [Test]
+        [TestCase( 0, "/", "", "/" )] //TODO: solve
+        [TestCase( 1, "", "/", "/" )]
+        [TestCase( 2, "~", "/", "/" )]
+        [TestCase( 3, "/root/Project/A/B/C", "Project/A/", "/root/Project/A/B/C/Project/A" )] // TODO: solve
+        [TestCase( 4, "Project/A/B/C", "/root/tcejorP/A/", "/root/tcejorP/A/" )] // TODO: this throws
+        [TestCase (5,  "https://github.com/Invenietis/CK-Core", "A/B", "https://github.com/Invenietis/CK-Core/A/B" )] // TODO: solve
+        [TestCase (6,  "A/B", "https://github.com/Invenietis/CK-Core", "https://github.com/Invenietis/CK-Core" )] // TODO: this throws
+        [TestCase( 7, "~/Pictures", "/Documents/A", "/Documents/A" )] //TODO: this throws
+        [TestCase( 8, "/Documents/A", "~/Pictures", "~/Pictures" )]
+        // @formatter:on
+        public void CreateRelative_experiments_different_rootKind
+        (
+            int i, // an index to get the same order in test explorer
+            string sourceString,
+            string targetString,
+            string expectedString
+        )
+        {
+            CreateRelativeTester( sourceString, targetString, expectedString );
+        }
+
 
         private static void CreateRelativeTester( string sourceString, string targetString, string expectedString )
         {
@@ -67,7 +93,16 @@ namespace CK.Readus.Tests
                 Debug.Assert( toReturn.IsRelative(), "toReturn.IsRelative()" );
                 return toReturn;
             }
+            //TODO: We may consider a fact. Probably hard to enforce but the method could be :
+            // source is a path that we assume we start from. Kind of a current position.
+            // target is a way to go from source to target.
+            // This way we can get a relative path with a real logic.
 
+            if( source.RootKind != target.RootKind ) // No proxy
+            {
+                if( target.IsRooted ) return target;
+                if( source.IsRooted ) return source.Combine( target ).ResolveDots( source.Parts.Any() ? 1 : 0 );
+            }
             // if( source.IsRooted || target.IsRooted ) throw new NotImplementedException();
 
             if( source.Equals( target ) ) return ReturnProxy( "" );
