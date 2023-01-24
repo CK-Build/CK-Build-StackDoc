@@ -26,7 +26,7 @@ public class MarkdownDocumentWrapper // MarkdownDocumentHolder
 
     public static MarkdownDocumentWrapper Load( NormalizedPath path )
     {
-        Debug.Assert( path.IsAbsolute() );
+        Debug.Assert( path.IsRooted );
 
         var text = File.ReadAllText( path );
         var md = Markdown.Parse( text );
