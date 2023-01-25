@@ -24,7 +24,6 @@ hello [link](linkToSomething).
         void Do( IActivityMonitor monitor, NormalizedPath path )
         {
             hasBeenCalled = true;
-            monitor.Trace( $"Check {path}" );
         }
 
         sut.CheckLinks( TestHelper.Monitor, Do );
@@ -48,12 +47,11 @@ hello [link](linkToSomething).
         {
             var transformed = path.AppendPart( "AddedPart" );
 
-            monitor.Trace( $"Transform {path} into {transformed}" );
             return transformed;
         }
 
         sut.TransformLinks( TestHelper.Monitor, Do );
-
+        sut.Apply( TestHelper.Monitor );
         sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( "linkToSomething/AddedPart" );
     }
 
@@ -72,7 +70,6 @@ hello [link](linkToSomething).
         void Do( IActivityMonitor monitor, NormalizedPath path )
         {
             calls++;
-            monitor.Trace( $"Check {path}" );
         }
 
         sut.CheckLinks( TestHelper.Monitor, Do );
@@ -97,12 +94,11 @@ hello [link](linkToSomething).
             calls++;
             var transformed = path.AppendPart( "AddedPart" );
 
-            monitor.Trace( $"Transform {path} into {transformed}" );
             return transformed;
         }
 
         sut.TransformLinks( TestHelper.Monitor, Do );
-
+        sut.Apply( TestHelper.Monitor );
         calls.Should().Be( 3 );
 
         var transformedLinks = sut.MarkdownDocument.Descendants().OfType<LinkInline>().ToArray();
@@ -138,12 +134,11 @@ hello [link](linkToSomething).
 
             transformed.Should().Be( expected );
 
-            monitor.Trace( $"Transform {path} into {transformed}" );
             return transformed;
         }
 
         sut.TransformLinks( TestHelper.Monitor, Do );
-
+        sut.Apply( TestHelper.Monitor );
         sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( expected );
     }
 }

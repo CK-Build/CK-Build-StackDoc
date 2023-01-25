@@ -110,6 +110,7 @@ Thanks for the click !
 
         theLink.Url.Should().Be( "clickMe.md" );
         sut.EnsureLinks( TestHelper.Monitor );
+        sut.Apply( TestHelper.Monitor );
         theLink.Url.Should().Be( "clickMe.html" );
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace CK.Readus.Tests;
+﻿using CK.Core;
+
+namespace CK.Readus.Tests;
 
 public class MdStackTests : TestBase
 {
@@ -34,16 +36,23 @@ public class MdStackTests : TestBase
                 .Select( p => basePath.AppendPart( p ) )
                 .ToArray();
 
-        var repositoryFactory = new MdRepositoryReader();
-        var repositories = new Dictionary<string, MdRepository>();
-
+        // var repositoryFactory = new MdRepositoryReader();
+        // var repositories = new Dictionary<string, MdRepository>();
+        //
+        // foreach( var repoPath in repoPaths )
+        // {
+        //     var repo = repositoryFactory.ReadPath( TestHelper.Monitor, repoPath, string.Empty );
+        //     repositories.Add( repo.RepositoryName ,repo );
+        // }
+        //
+        // var sut = new MdStack( repositories, name );
+        var repositories = new List<(NormalizedPath, NormalizedPath)>();
         foreach( var repoPath in repoPaths )
         {
-            var repo = repositoryFactory.ReadPath( TestHelper.Monitor, repoPath, string.Empty );
-            repositories.Add( repo.RepositoryName ,repo );
+            repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = new MdStack( repositories, name );
+        var sut = MdStack.Load( TestHelper.Monitor, name, repositories );
 
         var outputPath = TestHelper.TestProjectFolder
                                    .AppendPart( "OUT" )

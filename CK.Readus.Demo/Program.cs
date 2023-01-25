@@ -26,7 +26,7 @@ public static class Program
         if (args.Length == 1)
         {
             outputFolder = inputFolder + "_output";
-            monitor.Info( $"Output folder not provided, using ${outputFolder}." );
+            monitor.Info( $"Output folder not provided, using '${outputFolder}'." );
         }
         else outputFolder = args[1];
 

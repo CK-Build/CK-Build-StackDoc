@@ -18,27 +18,30 @@ public class MdRepositoryReader
     {
         Throw.CheckArgument( !rootPath.IsEmptyPath );
 
-        monitor.Info( $"Read repository {rootPath}" );
-
-        var repositoryName = rootPath.LastPart;
-        var filesPaths = Directory.GetFiles
-        (
-            rootPath.Path,
-            "*.md",
-            new EnumerationOptions { RecurseSubdirectories = true }
-        );
-        //TODO: what about built things. Like under node_modules.
-
-        var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
-
-        foreach( var file in filesPaths )
+        using( monitor.OpenInfo( $"Reading repository '{rootPath}'" ) )
         {
-            monitor.Trace( $"Add {file}" );
-            documentationFiles.Add( file, MdDocument.Load( file ) );
+            var repositoryName = rootPath.LastPart;
+            var filesPaths = Directory.GetFiles
+            (
+                rootPath.Path,
+                "*.md",
+                new EnumerationOptions { RecurseSubdirectories = true }
+            );
+            //TODO: what about built things. Like under node_modules.
+
+            var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
+
+            foreach( var file in filesPaths )
+            {
+                monitor.Info( $"Add '{file}'" );
+                documentationFiles.Add( file, MdDocument.Load( file ) );
+            }
+
+            monitor.Info( $"Repository '{repositoryName}' contains a total of "
+                        + $"{documentationFiles.Values.Select( v => v.MarkdownBoundLinks.Count ).Sum()} links"
+                        + $" within {filesPaths.Length} md files.");
+
+            return new MdRepository( repositoryName, remoteUrl, rootPath, documentationFiles );
         }
-
-        monitor.Info( $"Repository \"{repositoryName}\" at location {rootPath} contains {filesPaths.Length} md Files." );
-
-        return new MdRepository( repositoryName, remoteUrl, rootPath, documentationFiles );
     }
 }

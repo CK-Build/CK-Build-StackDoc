@@ -21,7 +21,6 @@ public class MdBoundLink
     /// Current result.
     /// Transformations applied.
     /// </summary>
-    [Obsolete("Not Implemented")]
     public NormalizedPath Current { get; set; }
 
     public LinkInline MarkdownReference { get; }
@@ -47,14 +46,3 @@ public class MdBoundLink
 }
 
 // some errors / log properties
-
-/*
- * MdContext
- * MdStack
- * MdRepository
- * MdDocument
- * MdLink
- *
- * All have Property Parent {get;}
- *
- */

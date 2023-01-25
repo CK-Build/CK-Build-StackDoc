@@ -46,6 +46,11 @@ public class MdDocument
         return new MdDocument( md, path );
     }
 
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="monitor"></param>
+    /// <param name="check">Takes a rooted path</param>
     public void CheckLinks
     (
         IActivityMonitor monitor,
@@ -54,6 +59,10 @@ public class MdDocument
     {
         foreach( var link in MarkdownBoundLinks )
         {
+            monitor.Info( $"Check '{link.OriginPath}'" );
+            if( link.OriginPath.IsEmptyPath ) monitor.Info( "Is empty link" );
+            monitor.Info( link.OriginPath.IsRooted ? "Is rooted link" : "Is not rooted link" );
+
             check( monitor, link.RootedPath );
             //TODO: Here we may want to expose the LinkInline as it contains information about the link.
             // For example, we may need the text related to this link.
@@ -64,8 +73,7 @@ public class MdDocument
     public void TransformLinks
     (
         IActivityMonitor monitor,
-        Func<IActivityMonitor, NormalizedPath, NormalizedPath> transform,
-        bool dryRun = false
+        Func<IActivityMonitor, NormalizedPath, NormalizedPath> transform
     )
     {
         foreach( var link in MarkdownBoundLinks )
@@ -83,9 +91,17 @@ public class MdDocument
             }
             else if( transformed.IsRelative() ) { }
 
-            if( dryRun ) continue;
+            link.Current = transformed;
 
-            link.MarkdownReference.Url = transformed;
+            monitor.Info( $"Transform '{link.OriginPath}' into '{link.Current}'" );
+        }
+    }
+
+    public void Apply( IActivityMonitor monitor )
+    {
+        foreach( var link in MarkdownBoundLinks )
+        {
+            link.MarkdownReference.Url = link.Current;
         }
     }
 }

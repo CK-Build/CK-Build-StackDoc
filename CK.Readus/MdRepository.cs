@@ -31,14 +31,27 @@ public class MdRepository
         DocumentationFiles = documentationFiles;
     }
 
-    public void EnsureLinks( IActivityMonitor monitor, bool dryRun = false )
+    public void EnsureLinks( IActivityMonitor monitor )
     {
         foreach( var file in DocumentationFiles )
         {
-            monitor.Trace( $"Check links in file {file.Key}" );
-            file.Value.CheckLinks( monitor, Check );
-            monitor.Trace( $"Transform links in file {file.Key}" );
-            file.Value.TransformLinks( monitor, Transform, dryRun );
+            using( monitor.OpenInfo( $"Check links in file '{file.Value.DocumentName}'" ) )
+            {
+                file.Value.CheckLinks( monitor, Check );
+            }
+
+            using( monitor.OpenInfo( $"Transform links in file '{file.Value.DocumentName}'" ) )
+            {
+                file.Value.TransformLinks( monitor, Transform );
+            }
+        }
+    }
+
+    public void Apply( IActivityMonitor monitor )
+    {
+        foreach( var file in DocumentationFiles )
+        {
+            file.Value.Apply( monitor );
         }
     }
 
@@ -49,7 +62,7 @@ public class MdRepository
     /// <param name="outputPath"></param>
     public void Generate( IActivityMonitor monitor, NormalizedPath outputPath )
     {
-        monitor.Trace( $"Writing {RepositoryName} documentation to {outputPath}" );
+        monitor.Info( $"Writing '{RepositoryName}' documentation to '{outputPath}'" );
 
         NormalizedPath ResolvePath( NormalizedPath file )
         {
@@ -79,9 +92,6 @@ public class MdRepository
 
     private void Check( IActivityMonitor monitor, NormalizedPath link )
     {
-        monitor.Trace( $"Check {link}" );
-        if( link.IsEmptyPath ) monitor.Trace( "Is empty link" );
-        monitor.Trace( link.IsRooted ? "Is rooted link" : "Is not rooted link" );
         //TODO: check when the link has no attached text (so is useless).
     }
 
@@ -101,7 +111,6 @@ public class MdRepository
             }
         }
 
-        monitor.Trace( $"Transform {link} into {transformed}" );
         return transformed;
         //TODO: A link to a directory should be mapped to README.md in this directory
     }
@@ -118,7 +127,6 @@ public class MdRepository
     {
         if( link.IsRelative() ) throw new ArgumentException( "Expects absolute path", nameof( link ) );
 
-        return File.Exists( link )
-            && link.StartsWith( RootPath );
+        return link.StartsWith( RootPath );
     }
 }
