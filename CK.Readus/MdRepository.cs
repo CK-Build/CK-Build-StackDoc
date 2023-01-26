@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks.Dataflow;
-using CK.Core;
+﻿using CK.Core;
 using Markdig;
 
 namespace CK.Readus;
@@ -15,6 +14,9 @@ public class MdRepository
     public MdStack Parent { get; }
 
     // TODO: this could be readonly dictionary ?
+    /// <summary>
+    /// Key is full path.
+    /// </summary>
     public Dictionary<NormalizedPath, MdDocument> DocumentationFiles { get; }
 
     public MdRepository

@@ -1,4 +1,5 @@
-﻿using CK.Core;
+﻿using System.Diagnostics;
+using CK.Core;
 using Markdig;
 using Markdig.Syntax;
 
@@ -26,13 +27,17 @@ public class MdRepositoryReader
                 rootPath.Path,
                 "*.md",
                 new EnumerationOptions { RecurseSubdirectories = true }
-            );
+            )
+            .Select( f => new NormalizedPath( f ) )
+            .ToArray();
+
             //TODO: what about built things. Like under node_modules.
 
             var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
 
             foreach( var file in filesPaths )
             {
+                Debug.Assert( file.IsRooted, "file.IsRooted" );
                 monitor.Info( $"Add '{file}'" );
                 documentationFiles.Add( file, MdDocument.Load( file ) );
             }
