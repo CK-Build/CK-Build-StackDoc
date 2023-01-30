@@ -6,4 +6,5 @@
 public class MdContext
 {
     private IDictionary<string, MdStack> Stacks { get; }
+    private NormalizedPath _virtualRoot = new NormalizedPath( "~" );
 }

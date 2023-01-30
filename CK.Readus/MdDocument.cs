@@ -26,6 +26,20 @@ public class MdDocument
     public IReadOnlyList<MdBoundLink> MarkdownBoundLinks { get; }
 
     internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path )
+    /// <summary>
+    /// I don't know about this
+    /// If there is no error in a MdBoundLink, it means either :
+    /// - The Current has not been set so the transformation has not been called
+    /// - The Check has not been call
+    /// - Both has been called and there are no error
+    /// - Both has been called, or one of them, and there are error
+    ///
+    /// We can probably want to check on error when there is no point to.
+    /// And we may want to skip transformation phase anyway.
+    /// </summary>
+    public bool IsError => MarkdownBoundLinks.Any( m => m.Errors.Count > 0 );
+
+    public bool IsOk => IsError is false;
     {
         MarkdownDocument = markdownDocument;
         OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
@@ -99,8 +113,12 @@ public class MdDocument
 
     public void Apply( IActivityMonitor monitor )
     {
+        if( IsError ) throw new Exception( "I don't know" );
         foreach( var link in MarkdownBoundLinks )
         {
+            // TODO: If link.Current is null, there is something wrong.
+            // Handle it somehow.
+            // The check right up secure this but this is not what i want.
             link.MarkdownReference.Url = link.Current;
         }
     }
