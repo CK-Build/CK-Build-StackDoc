@@ -39,12 +39,12 @@ public class MdRepository
         {
             using( monitor.OpenInfo( $"Check links in file '{file.Value.DocumentName}'" ) )
             {
-                file.Value.CheckLinks( monitor, Check );
+                file.Value.CheckLinks( monitor, CheckRepository );
             }
 
             using( monitor.OpenInfo( $"Transform links in file '{file.Value.DocumentName}'" ) )
             {
-                file.Value.TransformLinks( monitor, Transform );
+                file.Value.TransformLinks( monitor, TransformRepository );
             }
         }
     }
@@ -92,12 +92,12 @@ public class MdRepository
         }
     }
 
-    private void Check( IActivityMonitor monitor, NormalizedPath link )
+    public void CheckRepository( IActivityMonitor monitor, NormalizedPath link )
     {
         //TODO: check when the link has no attached text (so is useless).
     }
 
-    private NormalizedPath Transform( IActivityMonitor monitor, NormalizedPath link )
+    public NormalizedPath TransformRepository( IActivityMonitor monitor, NormalizedPath link )
     {
         var transformed = new NormalizedPath( link );
 
