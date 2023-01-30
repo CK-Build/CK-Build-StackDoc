@@ -22,6 +22,36 @@ public class MdContext
     // private IList<Action<IActivityMonitor, NormalizedPath>> _checkers;
     public NormalizedPath OutputPath { get; private set; }
 
+    public MdContext
+    (
+        IEnumerable<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)> stacks
+    ) : this()
+    {
+        foreach( var (stackName, repositories) in stacks ) Init( stackName, repositories );
+        // Parameters could be stacks at least. Or a list of repositories from where we create stacks.
+        // Probably here needs to run all the things to make it ready to report or act.
+    }
+
+    public MdContext( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
+    : this() =>
+    Init( stackName, repositories );
+
+    private MdContext()
+    {
+        Stacks = new Dictionary<string, MdStack>();
+
+        // _transformers = new List<Func<IActivityMonitor, NormalizedPath, NormalizedPath>>();
+        // _checkers = new List<Action<IActivityMonitor, NormalizedPath>>();
+    }
+
+    private void Init( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
+    {
+        var monitor = new ActivityMonitor(); // I don't know if I should just pass it as ctor arg.
+
+        var mdStack = MdStack.Load( monitor, stackName, repositories );
+        if( Stacks.TryAdd( stackName, mdStack ) is false )
+            throw new ArgumentException( "This stack is already registered: ", nameof( stackName ) );
+    }
 
     public void SetOutputPath( NormalizedPath outputPath )
     {
