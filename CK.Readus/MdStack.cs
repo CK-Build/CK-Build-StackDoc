@@ -52,4 +52,35 @@ public class MdStack
             }
         }
     }
+
+    //TODO: Where to put the transformations methods ?
+    // They can be in a Md* class, like here.
+    // But it could be handled differently, anywhere actually.
+    // It depend how it is called, but the whole stack of Md* has access to everything.
+    public NormalizedPath TransformCrossRepositoryUrl( IActivityMonitor monitor, NormalizedPath link )
+    {
+        var isUri = link.RootKind == NormalizedPathRootKind.RootedByURIScheme;
+        if( isUri is false ) return link;
+
+        foreach( var (name, mdRepository) in Repositories )
+        {
+            var url = mdRepository.RemoteUrl;
+
+            Debug.Assert( url.IsEmptyPath is false, "url.IsEmptyPath is false" );
+            // Strict has to be false because by default when both path are equals it return false.
+            // This is not a behavior that I would except to be the default.
+            // I may want to have a way to return true when both are equal but not when other is empty.
+            var linkIsInScope = link.StartsWith( url, false );
+            if( linkIsInScope is false ) continue;
+
+            var newRoot = mdRepository.RootPath;
+
+
+            var transformed = newRoot.Combine( link.RemoveFirstPart( url.Parts.Count ) );
+            return transformed;
+        }
+
+        return link;
+    }
+
 }
