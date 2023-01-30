@@ -7,8 +7,29 @@ namespace CK.Readus;
 
 public class MdContext
 {
-    private IDictionary<string, MdStack> Stacks { get; }
     private NormalizedPath _virtualRoot = new NormalizedPath( "~" );
+
+    /// <summary>
+    /// Key is stack name.
+    /// </summary>
+    private IDictionary<string, MdStack> Stacks { get; init; }
+
+    // TODO: Remove this or change than as dictionary to link them to a document
+    // This can be initialized in the ctor with the help of GetTransforms and GetChecks
+    // And could even be customized before/after
+    // Without customization there is not much point.
+    // private IList<Func<IActivityMonitor, NormalizedPath, NormalizedPath>> _transformers;
+    // private IList<Action<IActivityMonitor, NormalizedPath>> _checkers;
+    public NormalizedPath OutputPath { get; private set; }
+
+
+    public void SetOutputPath( NormalizedPath outputPath )
+    {
+        Throw.CheckNotNullOrWhiteSpaceArgument( outputPath );
+        Throw.CheckArgument( Directory.Exists( outputPath ) );
+
+        OutputPath = outputPath;
+    }
 
     private Action<IActivityMonitor, NormalizedPath>[] GetChecks(MdDocument mdDocument)
     {
