@@ -40,6 +40,7 @@ public class MdDocument
     public bool IsError => MarkdownBoundLinks.Any( m => m.Errors.Count > 0 );
 
     public bool IsOk => IsError is false;
+    public NormalizedPath Current { get; set; }
     {
         MarkdownDocument = markdownDocument;
         OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
@@ -73,9 +74,8 @@ public class MdDocument
     {
         foreach( var link in MarkdownBoundLinks )
         {
-            monitor.Info( $"Check '{link.OriginPath}'" );
+            // monitor.Info( $"Check '{link.OriginPath}'" );
             if( link.OriginPath.IsEmptyPath ) monitor.Info( "Is empty link" );
-            monitor.Info( link.OriginPath.IsRooted ? "Is rooted link" : "Is not rooted link" );
 
             check( monitor, link.RootedPath );
             //TODO: Here we may want to expose the LinkInline as it contains information about the link.
@@ -93,6 +93,8 @@ public class MdDocument
         foreach( var link in MarkdownBoundLinks )
         {
             Debug.Assert( link.RootedPath.IsRooted, "link.RootedPath.IsRooted" );
+            //TODO: I should transform current ? So each transformation can be chained instead of
+            // overriding the preceding one.
             var transformed = transform( monitor, link.RootedPath );
             // I'm not sure this is true but I keep it for now.
             Debug.Assert( transformed.IsRooted, "transformed.IsRooted" );
@@ -107,7 +109,12 @@ public class MdDocument
 
             link.Current = transformed;
 
-            monitor.Info( $"Transform '{link.OriginPath}' into '{link.Current}'" );
+            monitor.Info
+            (
+                link.OriginPath.Equals( link.Current )
+                ? $"Link '{link.OriginPath}' unchanged"
+                : $"Transform '{link.OriginPath}' into '{link.Current}'"
+            );
         }
     }
 

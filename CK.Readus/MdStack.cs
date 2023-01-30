@@ -24,7 +24,7 @@ public class MdStack
     (
         IActivityMonitor monitor,
         string stackName,
-        IEnumerable<(NormalizedPath localPath, NormalizedPath remoteUrl)> repositoriesInfo
+        IEnumerable<(NormalizedPath localPath, NormalizedPath remoteUrl)> repositoriesInfo //TODO dico. Path is uniq
     )
     {
         using( monitor.OpenInfo( $"Loading stack '{stackName}'" ) )
