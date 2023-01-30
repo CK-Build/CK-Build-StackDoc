@@ -24,15 +24,18 @@ public class MdRepository
         string repositoryName,
         NormalizedPath remoteUrl,
         NormalizedPath rootPath,
-        Dictionary<NormalizedPath, MdDocument> documentationFiles
+        Dictionary<NormalizedPath, MdDocument> documentationFiles,
+        MdStack parent
     )
     {
         RepositoryName = repositoryName;
         RemoteUrl = remoteUrl;
         RootPath = rootPath;
         DocumentationFiles = documentationFiles;
+        Parent = parent;
     }
 
+    [Obsolete("Will be removed for clarity. Use MdContext instead.")]
     public void EnsureLinks( IActivityMonitor monitor )
     {
         foreach( var file in DocumentationFiles )

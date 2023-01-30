@@ -61,6 +61,47 @@ public class MdContext
         OutputPath = outputPath;
     }
 
+    public void WriteHtml( IActivityMonitor monitor, NormalizedPath outputPath )
+    {
+        SetOutputPath( outputPath );
+        WriteHtml( monitor );
+    }
+
+    public void WriteHtml( IActivityMonitor monitor )
+    {
+        Throw.CheckArgument( OutputPath.HasParts );
+
+        foreach( var (name, mdStack) in Stacks )
+        {
+            if( EnsureProcessing( monitor, mdStack ) )
+                mdStack.Generate( monitor, OutputPath );
+        }
+    }
+
+    private bool EnsureProcessing( IActivityMonitor monitor, MdStack mdStack )
+    {
+        var isOk = true;
+
+        var processor = new LinkProcessor();
+        foreach( var (path, mdRepository) in mdStack.Repositories )
+        {
+            var mdDocuments = mdRepository.DocumentationFiles.Values.ToArray();
+            var processingResult = processor.Process
+            (
+                monitor,
+                mdDocuments,
+                GetChecks,
+                GetTransforms
+            );
+            isOk = isOk && processingResult;
+        }
+
+        return isOk;
+        // Configure and run the processing
+        // If any error is raised, return false.
+        throw new NotImplementedException();
+    }
+
     private Action<IActivityMonitor, NormalizedPath>[] GetChecks(MdDocument mdDocument)
     {
         var mdRepository = mdDocument.Parent;

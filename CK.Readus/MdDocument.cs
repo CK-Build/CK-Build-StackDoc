@@ -25,7 +25,6 @@ public class MdDocument
     public MdRepository Parent { get; }
     public IReadOnlyList<MdBoundLink> MarkdownBoundLinks { get; }
 
-    internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path )
     /// <summary>
     /// I don't know about this
     /// If there is no error in a MdBoundLink, it means either :
@@ -41,9 +40,12 @@ public class MdDocument
 
     public bool IsOk => IsError is false;
     public NormalizedPath Current { get; set; }
+
+    internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path, MdRepository mdRepository )
     {
         MarkdownDocument = markdownDocument;
         OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
+        Parent = mdRepository;
 
         MarkdownBoundLinks = MarkdownDocument
                              .Descendants()
@@ -52,13 +54,13 @@ public class MdDocument
                              .ToList();
     }
 
-    public static MdDocument Load( NormalizedPath path )
+    public static MdDocument Load( NormalizedPath path, MdRepository mdRepository )
     {
         Debug.Assert( path.IsRooted, "path.IsRooted" );
 
         var text = File.ReadAllText( path );
         var md = Markdown.Parse( text );
-        return new MdDocument( md, path );
+        return new MdDocument( md, path, mdRepository );
     }
 
     /// <summary>

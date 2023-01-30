@@ -14,7 +14,8 @@ public class MdRepositoryReader
     (
         IActivityMonitor monitor,
         NormalizedPath rootPath,
-        NormalizedPath remoteUrl
+        NormalizedPath remoteUrl,
+        MdStack mdStack
     )
     {
         Throw.CheckArgument( !rootPath.IsEmptyPath );
@@ -35,18 +36,20 @@ public class MdRepositoryReader
 
             var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
 
+            var mdRepository = new MdRepository( repositoryName, remoteUrl, rootPath, documentationFiles, mdStack );
+
             foreach( var file in filesPaths )
             {
                 Debug.Assert( file.IsRooted, "file.IsRooted" );
                 monitor.Info( $"Add '{file}'" );
-                documentationFiles.Add( file, MdDocument.Load( file ) );
+                documentationFiles.Add( file, MdDocument.Load( file, mdRepository ) );
             }
 
             monitor.Info( $"Repository '{repositoryName}' contains a total of "
                         + $"{documentationFiles.Values.Select( v => v.MarkdownBoundLinks.Count ).Sum()} links"
                         + $" within {filesPaths.Length} md files.");
 
-            return new MdRepository( repositoryName, remoteUrl, rootPath, documentationFiles );
+            return mdRepository;
         }
     }
 }

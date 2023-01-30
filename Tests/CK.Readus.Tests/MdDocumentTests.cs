@@ -17,7 +17,7 @@ hello [link](linkToSomething).
 ";
         var md = Markdown.Parse( text );
 
-        var sut = new MdDocument( md, "virtualPath" );
+        var sut = new MdDocument( md, "virtualPath", default );
 
         var hasBeenCalled = false;
 
@@ -41,7 +41,7 @@ hello [link](linkToSomething).
 ";
         var md = Markdown.Parse( text );
 
-        var sut = new MdDocument( md, "VirtualPath" );
+        var sut = new MdDocument( md, "VirtualPath", default );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -63,7 +63,7 @@ hello [link](linkToSomething).
                                .AppendPart( "FooBarFakeRepo" )
                                .AppendPart( "README.md" );
 
-        var sut = MdDocument.Load( mdPath );
+        var sut = MdDocument.Load( mdPath, default );
 
         var calls = 0;
 
@@ -87,7 +87,7 @@ hello [link](linkToSomething).
 
         var calls = 0;
 
-        var sut = MdDocument.Load( mdPath );
+        var sut = MdDocument.Load( mdPath, default );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -126,7 +126,7 @@ hello [link](linkToSomething).
         var md = Markdown.Parse( text );
 
         var virtualFile = "C:/Users/Aymeric.Richard/Downloads/CK-Core-develop/CK.Core/AutomaticDI/README.md";
-        var sut = new MdDocument( md, virtualFile );
+        var sut = new MdDocument( md, virtualFile, default );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {

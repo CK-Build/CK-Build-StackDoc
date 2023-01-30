@@ -29,7 +29,7 @@ public class MdRepositoryTests : TestBase
                                  .AppendPart( "IN" )
                                  .AppendPart( repositoryName );
 
-        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl );
+        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default );
 
 
         sut.RepositoryName.Should().Be( repositoryName );
@@ -58,7 +58,7 @@ public class MdRepositoryTests : TestBase
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
-        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl );
+        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default);
 
         var outputFolder = TestHelper.TestProjectFolder
                                      .AppendPart( "OUT" )
@@ -103,7 +103,7 @@ Thanks for the click !
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
-        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl );
+        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default );
 
         var md = sut.DocumentationFiles[tempPath.AppendPart( "README.md" )].MarkdownDocument;
         var theLink = md.Descendants().OfType<LinkInline>().First();

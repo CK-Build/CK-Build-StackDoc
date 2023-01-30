@@ -33,7 +33,7 @@ public static class Program
         //TODO: cleanup output folder.
 
         var factory = new MdRepositoryReader();
-        var info = factory.ReadPath( monitor, inputFolder, string.Empty );
+        var info = factory.ReadPath( monitor, inputFolder, string.Empty, default );
 
         info.EnsureLinks( monitor );
         info.Generate( monitor, outputFolder );
