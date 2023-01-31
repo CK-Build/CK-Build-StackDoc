@@ -12,6 +12,7 @@ public enum LinkType
     InternalCode,
     InternalDirectory, // May be something that has to target a toc or a readme.md
 }
+
 public class MdBoundLink
 {
     public LinkType LinkType { get; }
@@ -57,6 +58,8 @@ public class MdBoundLink
 
         OriginPath = new NormalizedPath( MarkdownReference.Url );
 
+        Current = new NormalizedPath( OriginPath );
+
         //TODO: this should be a check. This should not throw here
         if( OriginPath.IsEmptyPath ) throw new NotImplementedException( "A null link could maybe be deleted" );
 
@@ -71,6 +74,28 @@ public class MdBoundLink
         else if( originIsNotBoundToMdDocument )
             RootedPath = mdDocument.Directory.Combine( OriginPath ).ResolveDots();
         else throw new NotImplementedException( $"Cannot determine a root for {OriginPath}" );
+
+        // Repo level
+        if( OriginPath.IsRelative() )
+        {
+            var extension = Path.GetExtension( OriginPath );
+            if( MarkdownReference.IsImage )
+                LinkType = LinkType.InternalImg;
+            else
+                LinkType = extension switch
+                {
+                ".md" => LinkType.InternalMd,
+                ""    => LinkType.InternalDirectory,
+                ".cs" => LinkType.InternalCode,
+                _     => LinkType.Unknown
+                };
+        }
+        else
+        {
+            LinkType = LinkType.External;
+        }
+
+        if( LinkType == LinkType.Unknown ) new ActivityMonitor().Warn( "LinkType could not be determined" );
     }
 }
 

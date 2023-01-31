@@ -103,10 +103,14 @@ public class MdStack
             var linkIsInScope = link.StartsWith( url, false );
             if( linkIsInScope is false ) continue;
 
-            var newRoot = mdRepository.RootPath;
+            var linkRelativeToItsRepository = link.RemoveFirstPart( url.Parts.Count );
+            // RepoName + relative path
+            var rootlessLink = new NormalizedPath( mdRepository.RepositoryName ).Combine( linkRelativeToItsRepository );
 
+            // go up to virtual root => unknown
+            // target is root +
 
-            var transformed = newRoot.Combine( link.RemoveFirstPart( url.Parts.Count ) );
+            var transformed = rootlessLink;
             return transformed;
         }
 

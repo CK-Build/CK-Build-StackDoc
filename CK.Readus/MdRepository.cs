@@ -107,7 +107,15 @@ public class MdRepository
         // TODO: a link to a directory should try look for a README.md file.
         // if( Directory.Exists( link.LastPart ) ) ;
 
-        if( IsOur( transformed ) ) //TODO: in case of a stack, this has to be changed
+        // for now true
+        // 99% cases we want to transform .md to .html
+        // But then we need to determine which links are to transform
+        // A link has to correspond to a file.
+        // At the very end I may resolve this :
+        // The Current link will have a resolved target.
+        // We can lookup in all the files and if the target match, we change extensions of both
+        // file and link.
+        if( true ) //TODO: in case of a stack, this has to be changed
         {
             var extension = Path.GetExtension( transformed.LastPart );
             if( extension.Equals( ".md" ) )

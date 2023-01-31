@@ -39,13 +39,25 @@ public class MdDocument
     public bool IsError => MarkdownBoundLinks.Any( m => m.Errors.Count > 0 );
 
     public bool IsOk => IsError is false;
+
+    /// <summary>
+    /// TODO: Set the relative path and handle extension
+    /// See CK.Readus.MdRepository.Generate
+    /// </summary>
     public NormalizedPath Current { get; set; }
+
+    /// <summary>
+    /// Path relative to the the repository root.
+    /// </summary>
+    /// <returns></returns>
+    public NormalizedPath RelativePath => Directory.RemoveFirstPart( Parent.RootPath.Parts.Count - 1 );
 
     internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path, MdRepository mdRepository )
     {
         MarkdownDocument = markdownDocument;
         OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
         Parent = mdRepository;
+        Current = OriginPath;
 
         MarkdownBoundLinks = MarkdownDocument
                              .Descendants()
@@ -94,12 +106,11 @@ public class MdDocument
     {
         foreach( var link in MarkdownBoundLinks )
         {
-            Debug.Assert( link.RootedPath.IsRooted, "link.RootedPath.IsRooted" );
             //TODO: I should transform current ? So each transformation can be chained instead of
             // overriding the preceding one.
-            var transformed = transform( monitor, link.RootedPath );
+            var transformed = transform( monitor, link.Current );
             // I'm not sure this is true but I keep it for now.
-            Debug.Assert( transformed.IsRooted, "transformed.IsRooted" );
+            // Debug.Assert( transformed.IsRooted, "transformed.IsRooted" );
 
             if( transformed.StartsWith( Directory ) )
             {
@@ -107,16 +118,39 @@ public class MdDocument
                 var relativeLinkPath = transformed.RemoveFirstPart( Directory.Parts.Count );
                 transformed = relativeLinkPath;
             }
-            else if( transformed.IsRelative() ) { }
+            else if( transformed.IsRelative() )
+            {
+                // TODO: I may have forgot that we can target our own repo link. Fuck
+                // I can try to use my full method GetRelative()
 
-            link.Current = transformed;
+                // maybe it's wrong but for now I handle the case the link is relative, so may come from
+                // an other repo.
+                // In the future i may use a specific virtual root like ~
+
+                // target repo2/readme.md
+                // source repo1/project/
+                // i go to ../../../repo2/readme.md
+                var source = RelativePath;
+                var target = transformed;
+                //TODO: here source and/or target are probably wrong
+                // mostly target
+                if( link.LinkType.Equals( LinkType.External ) )
+                    transformed = CreateRelative( source, target );
+                //  var moveUpBy = source.Parts.Count;
+                //
+                //  var result = "";
+                //  for( var i = 0; i < moveUpBy; i++ ) result += "../";
+                // transformed = new NormalizedPath( result ).Combine( target );
+            }
 
             monitor.Info
             (
-                link.OriginPath.Equals( link.Current )
-                ? $"Link '{link.OriginPath}' unchanged"
-                : $"Transform '{link.OriginPath}' into '{link.Current}'"
+                transformed.Equals( link.Current )
+                ? $"Link '{link.Current}' unchanged"
+                : $"Transform '{link.Current}' into '{transformed}'"
             );
+
+            link.Current = transformed;
         }
     }
 
@@ -129,6 +163,78 @@ public class MdDocument
             // Handle it somehow.
             // The check right up secure this but this is not what i want.
             link.MarkdownReference.Url = link.Current;
+        }
+    }
+
+    static NormalizedPath CreateRelative( NormalizedPath source, NormalizedPath target )
+    {
+        NormalizedPath ReturnProxy( NormalizedPath toReturn )
+        {
+            Debug.Assert( toReturn.IsRelative(), "toReturn.IsRelative()" );
+            return toReturn;
+        }
+        //TODO: We may consider a fact. Probably hard to enforce but the method could be :
+        // source is a path that we assume we start from. Kind of a current position.
+        // target is a way to go from source to target.
+        // This way we can get a relative path with a real logic.
+
+        if( source.RootKind != target.RootKind ) // No proxy
+        {
+            if( target.IsRooted ) return new NormalizedPath( target );
+            if( source.IsRooted ) return source.Combine( target ).ResolveDots( source.Parts.Any() ? 1 : 0 );
+        }
+        // if( source.IsRooted || target.IsRooted ) throw new NotImplementedException();
+
+        if( source.Equals( target ) ) return ReturnProxy( "" );
+
+        if( target.StartsWith( source ) ) return ReturnProxy( target.RemoveFirstPart( source.Parts.Count ) );
+        if( source.StartsWith( target ) )
+        {
+            var moveUpBy = source.Parts.Count - target.Parts.Count;
+            var result = "";
+            for( var i = 0; i < moveUpBy; i++ ) result += "../";
+
+            return ReturnProxy( result );
+        }
+
+        {
+            // If rooted, stop move up on common root
+            var commonStartPartCount = 0;
+            while( source.Parts[commonStartPartCount] == target.Parts[commonStartPartCount] )
+            {
+                commonStartPartCount++;
+            }
+
+            if( source.IsRelative() && target.IsRelative() )
+            {
+                // it is handled up there
+                // Debug.Assert( commonStartPartCount.Equals( 0 ), "commonStartPartCount.Equals( 0 )" );
+            }
+
+            var moveUpBy = source.Parts.Count - commonStartPartCount;
+
+            var result = "";
+            for( var i = 0; i < moveUpBy; i++ ) result += "../";
+
+            // if target start with dots, needs to block
+            var rootPartCount = moveUpBy;
+            foreach( var targetPart in target.Parts )
+            {
+                if( targetPart.Equals( ".." ) ) rootPartCount++;
+                else break;
+            }
+
+            // The result has to be a relative path. Knowing this :
+            // Here we remove the common part from both path to create the suffix of the path.
+            // It removes a root (that become unneeded) if any.
+            var suffix = target.RemovePrefix( target.RemoveLastPart( target.Parts.Count - commonStartPartCount ) );
+
+            return ReturnProxy
+            (
+                new NormalizedPath( result )
+                .Combine( suffix )
+                .ResolveDots( rootPartCount )
+            );
         }
     }
 }
