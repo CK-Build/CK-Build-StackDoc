@@ -1,5 +1,4 @@
-﻿using CK.Core;
-using Markdig.Syntax;
+﻿using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
 namespace CK.Readus.Tests;

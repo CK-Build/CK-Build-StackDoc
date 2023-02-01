@@ -1,6 +1,4 @@
-﻿using CK.Core;
-
-namespace CK.Readus.Tests;
+﻿namespace CK.Readus.Tests;
 
 public class MdContextTests : TestBase
 {

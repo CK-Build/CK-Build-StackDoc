@@ -1,5 +1,4 @@
-﻿using CK.Core;
-using Markdig;
+﻿using Markdig;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 

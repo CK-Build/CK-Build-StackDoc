@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
 using CK.Core;
-using Markdig;
-using Markdig.Syntax;
 
 namespace CK.Readus;
 
