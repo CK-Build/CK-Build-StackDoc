@@ -1,6 +1,6 @@
 ﻿namespace CK.Readus.Tests;
 
-public class DocumentationCrawlerTests
+public class DocumentationCrawlerTests : TestBase
 {
     private readonly NormalizedPath _inFolder;
     private readonly NormalizedPath _fooBarSolutionFolder;
@@ -8,7 +8,7 @@ public class DocumentationCrawlerTests
 
     public DocumentationCrawlerTests()
     {
-        _inFolder = TestHelper.TestProjectFolder.AppendPart( "In" );
+        _inFolder = ProjectFolder.AppendPart( "In" );
         var tempFolder = _inFolder.AppendPart( "Temp" );
         _fooBarSolutionFolder = tempFolder.AppendPart( "FooBar" );
 

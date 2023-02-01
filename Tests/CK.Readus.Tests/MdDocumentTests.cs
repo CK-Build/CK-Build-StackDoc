@@ -25,7 +25,7 @@ hello [link](linkToSomething).
             hasBeenCalled = true;
         }
 
-        sut.CheckLinks( TestHelper.Monitor, Do );
+        sut.CheckLinks( Monitor, Do );
 
         hasBeenCalled.Should().BeTrue();
     }
@@ -51,15 +51,15 @@ hello [link](linkToSomething).
             return transformed;
         }
 
-        sut.TransformLinks( TestHelper.Monitor, Do );
-        sut.Apply( TestHelper.Monitor );
+        sut.TransformLinks( Monitor, Do );
+        sut.Apply( Monitor );
         sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( "linkToSomething/AddedPart" );
     }
 
     [Test]
     public void CheckLinks_FooBarFakeRepo()
     {
-        var mdPath = TestHelper.TestProjectFolder
+        var mdPath = ProjectFolder
                                .AppendPart( "In" )
                                .AppendPart( "FooBarFakeRepo" )
                                .AppendPart( "README.md" );
@@ -73,7 +73,7 @@ hello [link](linkToSomething).
             calls++;
         }
 
-        sut.CheckLinks( TestHelper.Monitor, Do );
+        sut.CheckLinks( Monitor, Do );
 
         calls.Should().Be( 3 );
     }
@@ -82,7 +82,7 @@ hello [link](linkToSomething).
     [Ignore("Solve TODO")]
     public void TransformLinks_FooBarFakeRepo()
     {
-        var mdPath = TestHelper.TestProjectFolder
+        var mdPath = ProjectFolder
                                .AppendPart( "In" )
                                .AppendPart( "FooBarFakeRepo" )
                                .AppendPart( "README.md" );
@@ -100,8 +100,8 @@ hello [link](linkToSomething).
             return transformed;
         }
 
-        sut.TransformLinks( TestHelper.Monitor, Do );
-        sut.Apply( TestHelper.Monitor );
+        sut.TransformLinks( Monitor, Do );
+        sut.Apply( Monitor );
         calls.Should().Be( 3 );
 
         var transformedLinks = sut.MarkdownDocument.Descendants().OfType<LinkInline>().ToArray();
@@ -142,8 +142,8 @@ hello [link](linkToSomething).
             return transformed;
         }
 
-        sut.TransformLinks( TestHelper.Monitor, Do );
-        sut.Apply( TestHelper.Monitor );
+        sut.TransformLinks( Monitor, Do );
+        sut.Apply( Monitor );
         sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( expected );
     }
 }

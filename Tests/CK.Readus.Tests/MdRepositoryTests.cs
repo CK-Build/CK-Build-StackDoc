@@ -11,7 +11,7 @@ public class MdRepositoryTests : TestBase
         // To explore output folder after tests, we want to delete its content before tests.
         // This is only for convenience.
 
-        var outputFolder = TestHelper.TestProjectFolder
+        var outputFolder = ProjectFolder
                                      .AppendPart( "Out" );
 
         if( Directory.Exists( outputFolder ) )
@@ -24,30 +24,26 @@ public class MdRepositoryTests : TestBase
         var factory = new MdRepositoryReader();
         var remoteUrl = string.Empty;
         var repositoryName = "FooBarFakeRepo";
-        var rootPath = TestHelper.TestProjectFolder
-                                 .AppendPart( "In" )
-                                 .AppendPart( repositoryName );
+        var rootPath = InFolder.AppendPart( repositoryName );
 
-        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default );
+        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
 
 
         sut.RepositoryName.Should().Be( repositoryName );
-        sut.EnsureLinks( TestHelper.Monitor );
+        sut.EnsureLinks( Monitor );
 
-        var outputFolder = TestHelper.TestProjectFolder
+        var outputFolder = ProjectFolder
                                      .AppendPart( "Out" )
                                      .AppendPart( repositoryName + "_generated" );
         Directory.CreateDirectory( outputFolder );
-        sut.Generate( TestHelper.Monitor, outputFolder );
+        sut.Generate( Monitor, outputFolder );
     }
 
     [Test]
     public void Generate_should_output_html()
     {
         var repositoryName = "TheMightyProject";
-        var tempPath = TestHelper.TestProjectFolder
-                                 .AppendPart( "In" )
-                                 .AppendPart( "Temp" )
+        var tempPath = InFolder.AppendPart( "Temp" )
                                  .AppendPart( repositoryName );
 
         Directory.CreateDirectory( tempPath );
@@ -57,13 +53,13 @@ public class MdRepositoryTests : TestBase
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
-        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default);
+        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default);
 
-        var outputFolder = TestHelper.TestProjectFolder
+        var outputFolder = ProjectFolder
                                      .AppendPart( "Out" )
                                      .AppendPart( repositoryName + "_generated" );
         TestHelper.CleanupFolder( outputFolder );
-        sut.Generate( TestHelper.Monitor, outputFolder );
+        sut.Generate( Monitor, outputFolder );
 
         var expectedPath = outputFolder
                            .AppendPart( repositoryName )
@@ -89,9 +85,7 @@ Thanks for the click !
 
         var repositoryName = "TheMightyProject";
 
-        var tempPath = TestHelper.TestProjectFolder
-                                 .AppendPart( "In" )
-                                 .AppendPart( "Temp" )
+        var tempPath = InFolder.AppendPart( "Temp" )
                                  .AppendPart( repositoryName );
 
         Directory.CreateDirectory( tempPath );
@@ -102,14 +96,14 @@ Thanks for the click !
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
-        var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default );
+        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
 
         var md = sut.DocumentationFiles[tempPath.AppendPart( "README.md" )].MarkdownDocument;
         var theLink = md.Descendants().OfType<LinkInline>().First();
 
         theLink.Url.Should().Be( "clickMe.md" );
-        sut.EnsureLinks( TestHelper.Monitor );
-        sut.Apply( TestHelper.Monitor );
+        sut.EnsureLinks( Monitor );
+        sut.Apply( Monitor );
         theLink.Url.Should().Be( "clickMe.html" );
     }
 }

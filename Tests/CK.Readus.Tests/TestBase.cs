@@ -1,4 +1,7 @@
-﻿namespace CK.Readus.Tests;
+﻿// ReSharper disable MemberCanBeProtected.Global
+// NUnit needs it public
+
+namespace CK.Readus.Tests;
 
 public class TestBase
 {
@@ -7,7 +10,6 @@ public class TestBase
     public NormalizedPath InFolder => ProjectFolder.AppendPart( "In" );
     public NormalizedPath OutFolder => ProjectFolder.AppendPart( "Out" );
 
-    // ReSharper disable once MemberCanBeProtected.Global
     public TestBase() { }
 
     public MdContext SimpleContext => CreateSimpleStackContext();
