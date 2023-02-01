@@ -125,7 +125,6 @@ public class MdRepository
         }
 
         return transformed;
-        //TODO: A link to a directory should be mapped to README.md in this directory
     }
 
     /// <summary>
