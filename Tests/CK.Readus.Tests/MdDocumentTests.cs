@@ -60,7 +60,7 @@ hello [link](linkToSomething).
     public void CheckLinks_FooBarFakeRepo()
     {
         var mdPath = TestHelper.TestProjectFolder
-                               .AppendPart( "IN" )
+                               .AppendPart( "In" )
                                .AppendPart( "FooBarFakeRepo" )
                                .AppendPart( "README.md" );
 
@@ -83,7 +83,7 @@ hello [link](linkToSomething).
     public void TransformLinks_FooBarFakeRepo()
     {
         var mdPath = TestHelper.TestProjectFolder
-                               .AppendPart( "IN" )
+                               .AppendPart( "In" )
                                .AppendPart( "FooBarFakeRepo" )
                                .AppendPart( "README.md" );
 

@@ -12,7 +12,7 @@ public class MdContext
     /// <summary>
     /// Key is stack name.
     /// </summary>
-    private IDictionary<string, MdStack> Stacks { get; init; }
+    internal IDictionary<string, MdStack> Stacks { get; init; }
 
     // TODO: Remove this or change than as dictionary to link them to a document
     // This can be initialized in the ctor with the help of GetTransforms and GetChecks
@@ -48,7 +48,7 @@ public class MdContext
     {
         var monitor = new ActivityMonitor(); // I don't know if I should just pass it as ctor arg.
 
-        var mdStack = MdStack.Load( monitor, stackName, repositories );
+        var mdStack = MdStack.Load( monitor, stackName, repositories, this );
         if( Stacks.TryAdd( stackName, mdStack ) is false )
             throw new ArgumentException( "This stack is already registered: ", nameof( stackName ) );
     }

@@ -6,11 +6,9 @@ public class MdStackTests : TestBase
     public void SetUp()
     {
         var outputPath = TestHelper.TestProjectFolder
-                                   .AppendPart( "OUT" )
+                                   .AppendPart( "Out" )
                                    .AppendPart( "SimpleStack_Generated" );
 
-        // Directory.Delete( outputPath, true );
-        // Seems that does it better :
         TestHelper.CleanupFolder( outputPath );
     }
 
@@ -20,7 +18,7 @@ public class MdStackTests : TestBase
         var name = "foo-bar";
 
         var basePath = TestHelper.TestProjectFolder
-                                 .AppendPart( "IN" )
+                                 .AppendPart( "In" )
                                  .AppendPart( "SimpleStack" );
 
         var repoPaths =
@@ -40,10 +38,10 @@ public class MdStackTests : TestBase
             repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = MdStack.Load( TestHelper.Monitor, name, repositories );
+        var sut = MdStack.Load( TestHelper.Monitor, name, repositories, default );
 
         var outputPath = TestHelper.TestProjectFolder
-                                   .AppendPart( "OUT" )
+                                   .AppendPart( "Out" )
                                    .AppendPart( "SimpleStack_Generated" );
 
         sut.Generate( TestHelper.Monitor, outputPath );
@@ -55,7 +53,7 @@ public class MdStackTests : TestBase
         var name = "foo-bar";
 
         var basePath = TestHelper.TestProjectFolder
-                                 .AppendPart( "IN" )
+                                 .AppendPart( "In" )
                                  .AppendPart( "SimpleStack" );
 
         var repoPaths =
@@ -75,7 +73,7 @@ public class MdStackTests : TestBase
             repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = MdStack.Load( TestHelper.Monitor, name, repositories );
+        var sut = MdStack.Load( TestHelper.Monitor, name, repositories, default );
         foreach( var (repositoryName, mdRepository) in sut.Repositories )
         {
             mdRepository.EnsureLinks( TestHelper.Monitor );
@@ -84,7 +82,7 @@ public class MdStackTests : TestBase
 
 
         var outputPath = TestHelper.TestProjectFolder
-                                   .AppendPart( "OUT" )
+                                   .AppendPart( "Out" )
                                    .AppendPart( "SimpleStack_Generated" );
 
         sut.Generate( TestHelper.Monitor, outputPath );
@@ -96,7 +94,7 @@ public class MdStackTests : TestBase
         var name = "foo-bar";
 
         var basePath = TestHelper.TestProjectFolder
-                                 .AppendPart( "IN" )
+                                 .AppendPart( "In" )
                                  .AppendPart( "SimpleStackWithCrossRef" );
 
         var repoPaths =
@@ -116,7 +114,7 @@ public class MdStackTests : TestBase
             repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = MdStack.Load( TestHelper.Monitor, name, repositories );
+        var sut = MdStack.Load( TestHelper.Monitor, name, repositories, default );
         foreach( var (repositoryName, mdRepository) in sut.Repositories )
         {
             mdRepository.EnsureLinks( TestHelper.Monitor );
@@ -125,7 +123,7 @@ public class MdStackTests : TestBase
 
 
         var outputPath = TestHelper.TestProjectFolder
-                                   .AppendPart( "OUT" )
+                                   .AppendPart( "Out" )
                                    .AppendPart( "SimpleStackWithCrossRef_Generated" );
 
         sut.Generate( TestHelper.Monitor, outputPath );
@@ -137,7 +135,7 @@ public class MdStackTests : TestBase
         var stackName = "foo-bar";
 
         var basePath = TestHelper.TestProjectFolder
-                                 .AppendPart( "IN" )
+                                 .AppendPart( "In" )
                                  .AppendPart( "SimpleStackWithCrossRef" );
 
         var repoPaths =
@@ -167,7 +165,7 @@ public class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( TestHelper.Monitor, stackName, repositoriesInfo );
+        var mdStack = MdStack.Load( TestHelper.Monitor, stackName, repositoriesInfo, default );
 
         var urlsUnderTest = new[]
         {
@@ -199,7 +197,7 @@ public class MdStackTests : TestBase
         var stackName = "foo-bar";
 
         var basePath = TestHelper.TestProjectFolder
-                                 .AppendPart( "IN" )
+                                 .AppendPart( "In" )
                                  .AppendPart( "SimpleStackWithCrossRef" );
 
         var repoPaths =
@@ -229,7 +227,7 @@ public class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( TestHelper.Monitor, stackName, repositoriesInfo );
+        var mdStack = MdStack.Load( TestHelper.Monitor, stackName, repositoriesInfo, default );
 
         var urlsUnderTest = new[]
         {
@@ -256,7 +254,7 @@ public class MdStackTests : TestBase
         var stackName = "foo-bar";
 
         var basePath = TestHelper.TestProjectFolder
-                                 .AppendPart( "IN" )
+                                 .AppendPart( "In" )
                                  .AppendPart( "SimpleStackWithCrossRef" );
 
         var repoPaths =
@@ -285,7 +283,7 @@ public class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( TestHelper.Monitor, stackName, repositoriesInfo );
+        var mdStack = MdStack.Load( TestHelper.Monitor, stackName, repositoriesInfo, default );
 
         //TODO: Since the behavior of transformations has changed :
         // I do not want to manipulate absolute path on the local disk

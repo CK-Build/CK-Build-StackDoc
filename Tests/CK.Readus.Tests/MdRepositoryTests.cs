@@ -12,7 +12,7 @@ public class MdRepositoryTests : TestBase
         // This is only for convenience.
 
         var outputFolder = TestHelper.TestProjectFolder
-                                     .AppendPart( "OUT" );
+                                     .AppendPart( "Out" );
 
         if( Directory.Exists( outputFolder ) )
             Directory.Delete( outputFolder, true );
@@ -25,7 +25,7 @@ public class MdRepositoryTests : TestBase
         var remoteUrl = string.Empty;
         var repositoryName = "FooBarFakeRepo";
         var rootPath = TestHelper.TestProjectFolder
-                                 .AppendPart( "IN" )
+                                 .AppendPart( "In" )
                                  .AppendPart( repositoryName );
 
         var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default );
@@ -35,7 +35,7 @@ public class MdRepositoryTests : TestBase
         sut.EnsureLinks( TestHelper.Monitor );
 
         var outputFolder = TestHelper.TestProjectFolder
-                                     .AppendPart( "OUT" )
+                                     .AppendPart( "Out" )
                                      .AppendPart( repositoryName + "_generated" );
         Directory.CreateDirectory( outputFolder );
         sut.Generate( TestHelper.Monitor, outputFolder );
@@ -60,7 +60,7 @@ public class MdRepositoryTests : TestBase
         var sut = factory.ReadPath( TestHelper.Monitor, rootPath, remoteUrl, default);
 
         var outputFolder = TestHelper.TestProjectFolder
-                                     .AppendPart( "OUT" )
+                                     .AppendPart( "Out" )
                                      .AppendPart( repositoryName + "_generated" );
         TestHelper.CleanupFolder( outputFolder );
         sut.Generate( TestHelper.Monitor, outputFolder );

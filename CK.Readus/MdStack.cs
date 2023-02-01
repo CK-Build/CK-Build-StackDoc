@@ -23,22 +23,24 @@ public class MdStack
     //     StackName = stackName;
     // }
 
-    public MdStack( string stackName )
+    public MdStack( string stackName, MdContext parent )
     {
         StackName = stackName;
         Repositories = new Dictionary<string, MdRepository>();
+        Parent = parent;
     }
 
     public static MdStack Load
     (
         IActivityMonitor monitor,
         string stackName,
-        IEnumerable<(NormalizedPath localPath, NormalizedPath remoteUrl)> repositoriesInfo //TODO dico. Path is uniq
+        IEnumerable<(NormalizedPath localPath, NormalizedPath remoteUrl)> repositoriesInfo, //TODO dico. Path is uniq
+        MdContext parent
     )
     {
         using var info = monitor.OpenInfo( $"Loading stack '{stackName}'" );
 
-        var mdStack = new MdStack( stackName );
+        var mdStack = new MdStack( stackName, parent );
 
         var repositoryFactory = new MdRepositoryReader();
 
