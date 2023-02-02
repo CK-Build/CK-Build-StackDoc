@@ -11,8 +11,7 @@ public class MdRepositoryTests : TestBase
         // To explore output folder after tests, we want to delete its content before tests.
         // This is only for convenience.
 
-        var outputFolder = ProjectFolder
-                                     .AppendPart( "Out" );
+        var outputFolder = ProjectFolder.AppendPart( "Out" );
 
         if( Directory.Exists( outputFolder ) )
             Directory.Delete( outputFolder, true );
@@ -33,8 +32,8 @@ public class MdRepositoryTests : TestBase
         sut.EnsureLinks( Monitor );
 
         var outputFolder = ProjectFolder
-                                     .AppendPart( "Out" )
-                                     .AppendPart( repositoryName + "_generated" );
+                           .AppendPart( "Out" )
+                           .AppendPart( repositoryName + "_generated" );
         Directory.CreateDirectory( outputFolder );
         sut.Generate( Monitor, outputFolder );
     }
@@ -44,7 +43,7 @@ public class MdRepositoryTests : TestBase
     {
         var repositoryName = "TheMightyProject";
         var tempPath = InFolder.AppendPart( "Temp" )
-                                 .AppendPart( repositoryName );
+                               .AppendPart( repositoryName );
 
         Directory.CreateDirectory( tempPath );
         File.WriteAllText( tempPath.AppendPart( "README.md" ), "# Nothing" );
@@ -53,11 +52,11 @@ public class MdRepositoryTests : TestBase
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
-        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default);
+        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
 
         var outputFolder = ProjectFolder
-                                     .AppendPart( "Out" )
-                                     .AppendPart( repositoryName + "_generated" );
+                           .AppendPart( "Out" )
+                           .AppendPart( repositoryName + "_generated" );
         TestHelper.CleanupFolder( outputFolder );
         sut.Generate( Monitor, outputFolder );
 
@@ -86,7 +85,7 @@ Thanks for the click !
         var repositoryName = "TheMightyProject";
 
         var tempPath = InFolder.AppendPart( "Temp" )
-                                 .AppendPart( repositoryName );
+                               .AppendPart( repositoryName );
 
         Directory.CreateDirectory( tempPath );
         File.WriteAllText( tempPath.AppendPart( "README.md" ), mdText );
@@ -105,5 +104,46 @@ Thanks for the click !
         sut.EnsureLinks( Monitor );
         sut.Apply( Monitor );
         theLink.Url.Should().Be( "clickMe.html" );
+    }
+
+    // @formatter:off
+    [Test]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\README.md" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\Code.cs" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\SomeDocumentation.md" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\someFile" )]
+    // @formatter:on
+    public void TransformTargetDirectory_should_return_same_link_when_target_a_file( string link )
+    {
+        TransformAndAssert( link, DummyRepository, link );
+    }
+
+    [Test]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\" )]
+    public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme
+    ( string linkString )
+    {
+        var repo = DummyRepository;
+
+        var link = new NormalizedPath( linkString );
+        var expected = link.AppendPart( "README.md" );
+
+        TransformAndAssert( link, DummyRepository, expected );
+    }
+
+    [Test]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\AnotherProject" )]
+    public void
+    TransformTargetDirectory_should_return_same_link_when_target_a_directory_that_does_not_contains_a_readme
+    ( string link )
+    {
+        TransformAndAssert( link, DummyRepository, link );
+    }
+
+    private void TransformAndAssert( string link, MdRepository repository, string expected )
+    {
+        var sut = repository.TransformTargetDirectory( Monitor, link );
+        sut.Should().Be( expected );
     }
 }

@@ -18,6 +18,7 @@ Test :
 
 - Test stack with a context ready to use
 - Test helpers
+- TestBase helper : create methods that output generated context information like local path to help creating tests.
 
 Other :
 
