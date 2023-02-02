@@ -96,32 +96,34 @@ public class MdStack
     /// <returns></returns>
     public NormalizedPath TransformCrossRepositoryUrl( IActivityMonitor monitor, NormalizedPath link )
     {
+        if( link.IsRelative() ) return link;
+
         var isUri = link.RootKind == NormalizedPathRootKind.RootedByURIScheme;
-        if( isUri is false ) return link;
 
-        foreach( var (name, mdRepository) in Repositories )
+        return ResolveScope();
+
+        NormalizedPath ResolveScope()
         {
-            var url = mdRepository.RemoteUrl;
+            foreach( var (name, mdRepository) in Repositories )
+            {
+                var target = isUri ? mdRepository.RemoteUrl : mdRepository.RootPath;
 
-            Debug.Assert( url.IsEmptyPath is false, "url.IsEmptyPath is false" );
-            // Strict has to be false because by default when both path are equals it return false.
-            // This is not a behavior that I would except to be the default.
-            // I may want to have a way to return true when both are equal but not when other is empty.
-            var linkIsInScope = link.StartsWith( url, false );
-            if( linkIsInScope is false ) continue;
+                Debug.Assert( target.IsEmptyPath is false, "target.IsEmptyPath is false" );
+                // Strict has to be false because by default when both path are equals it return false.
+                // This is not a behavior that I would except to be the default.
+                // I may want to have a way to return true when both are equal but not when other is empty.
+                var linkIsInScope = link.StartsWith( target, false );
+                if( linkIsInScope is false ) continue;
 
-            var linkRelativeToItsRepository = link.RemoveFirstPart( url.Parts.Count );
-            // RepoName + relative path
-            var rootlessLink = new NormalizedPath( mdRepository.RepositoryName ).Combine( linkRelativeToItsRepository );
+                var linkRelativeToItsRepository = link.RemoveFirstPart( target.Parts.Count );
+                var rootlessLink = new NormalizedPath( mdRepository.RepositoryName )
+                .Combine( linkRelativeToItsRepository );
 
-            // go up to virtual root => unknown
-            // target is root +
+                return rootlessLink;
+            }
 
-            var transformed = rootlessLink;
-            return transformed;
+            return link;
         }
-
-        return link;
     }
 
     public void CheckStack( IActivityMonitor monitor, NormalizedPath link ) { }
