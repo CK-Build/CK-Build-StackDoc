@@ -10,52 +10,49 @@ public class TestBase
     public NormalizedPath InFolder => ProjectFolder.AppendPart( "In" );
     public NormalizedPath OutFolder => ProjectFolder.AppendPart( "Out" );
 
-    public TestBase() { }
-
-    public MdContext SimpleContext => CreateSimpleStackContext();
-    public MdContext CrossRefContext => CreateSimpleStackWithCrossRefContext();
-    public MdContext SingleRepositoryContext => CreateStackWithOneRepositoryContext();
-
-    private MdContext CreateSimpleStackContext()
+    public TestBase()
     {
-        var stackName = "SimpleStack";
-
-        var repositories = new[]
-        {
-            ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
-            ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
-            ("FooBarFakeRepo3", "https://github.com/Invenietis/FooBarFakeRepo3"),
-            ("FooBarFakeRepo4", "https://github.com/Invenietis/FooBarFakeRepo4"),
-        };
-
-        return CreateContext( stackName, repositories );
+        GenerateContexts();
     }
 
-    private MdContext CreateSimpleStackWithCrossRefContext()
+    public MdContext SimpleContext { get; private set; }
+    public MdContext CrossRefContext { get; private set; }
+    public MdContext SingleRepositoryContext { get; private set; }
+
+    private void GenerateContexts()
     {
-        var stackName = "SimpleStackWithCrossRef";
+        SimpleContext = CreateContext
+        (
+            "SimpleStack",
+            new[]
+            {
+                ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
+                ("FooBarFakeRepo3", "https://github.com/Invenietis/FooBarFakeRepo3"),
+                ("FooBarFakeRepo4", "https://github.com/Invenietis/FooBarFakeRepo4"),
+            }
+        );
 
-        var repositories = new[]
-        {
-            ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
-            ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
-            ("FooBarFakeRepo3", "https://github.com/Invenietis/FooBarFakeRepo3"),
-            ("FooBarFakeRepo4", "https://github.com/Invenietis/FooBarFakeRepo4"),
-        };
+        CrossRefContext = CreateContext
+        (
+            "SimpleStackWithCrossRef",
+            new[]
+            {
+                ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
+                ("FooBarFakeRepo3", "https://github.com/Invenietis/FooBarFakeRepo3"),
+                ("FooBarFakeRepo4", "https://github.com/Invenietis/FooBarFakeRepo4"),
+            }
+        );
 
-        return CreateContext( stackName, repositories );
-    }
-
-    private MdContext CreateStackWithOneRepositoryContext()
-    {
-        var stackName = "SimpleStack";
-
-        var repositories = new[]
-        {
-            ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
-        };
-
-        return CreateContext( stackName, repositories );
+        SingleRepositoryContext = CreateContext
+        (
+            "SimpleStack",
+            new[]
+            {
+                ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+            }
+        );
     }
 
     private MdContext CreateContext( (string stackName, (string local, string remote)[] repositories )[] stacks )
