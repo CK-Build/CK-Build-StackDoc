@@ -88,6 +88,12 @@ public class MdStack
     // They can be in a Md* class, like here.
     // But it could be handled differently, anywhere actually.
     // It depend how it is called, but the whole stack of Md* has access to everything.
+    /// <summary>
+    /// If the link target is in the stack, return its path relative to the stack virtual root.
+    /// </summary>
+    /// <param name="monitor"></param>
+    /// <param name="link"></param>
+    /// <returns></returns>
     public NormalizedPath TransformCrossRepositoryUrl( IActivityMonitor monitor, NormalizedPath link )
     {
         var isUri = link.RootKind == NormalizedPathRootKind.RootedByURIScheme;

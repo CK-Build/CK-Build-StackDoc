@@ -13,11 +13,33 @@ public class TestBase
     public TestBase()
     {
         GenerateContexts();
+        GenerateRepositories();
     }
 
+    /// <summary>
+    /// 1 SimpleStack.
+    /// 4 Repositories.
+    /// </summary>
     public MdContext SimpleContext { get; private set; }
+
+    /// <summary>
+    /// 1 SimpleStackWithCrossRef.
+    /// 4 Repositories.
+    /// Some documents can reference other repositories.
+    /// </summary>
     public MdContext CrossRefContext { get; private set; }
+
+    /// <summary>
+    /// 1 SimpleStack.
+    /// 1 Repository.
+    /// </summary>
     public MdContext SingleRepositoryContext { get; private set; }
+
+    /// <summary>
+    /// 1 Repository within a context that contains a single stack with this single repository.
+    /// When building for example a MdDocument, use RootPath as base for the MdDocument path.
+    /// </summary>
+    public MdRepository DummyRepository { get; private set; }
 
     private void GenerateContexts()
     {
@@ -53,6 +75,20 @@ public class TestBase
                 ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
             }
         );
+    }
+
+    private void GenerateRepositories()
+    {
+        var context = CreateContext
+        (
+            "SimpleStack",
+            new[]
+            {
+                ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+            }
+        );
+
+        DummyRepository = context.Stacks.First().Value.Repositories.First().Value;
     }
 
     private MdContext CreateContext( (string stackName, (string local, string remote)[] repositories )[] stacks )

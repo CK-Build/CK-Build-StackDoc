@@ -12,6 +12,7 @@ Implement :
 - Check url availability
 - A link to a directory should look for a README.md (or index)
 - Handle file extension transformation in the right component
+- Resolve dots at some point
 
 Test :
 

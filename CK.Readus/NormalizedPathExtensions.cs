@@ -13,4 +13,14 @@ internal static class NormalizedPathExtensions
     {
         return NormalizedPathHelpers.CreateRelative( source, target );
     }
+
+    public static NormalizedPath LastPart( this NormalizedPath source )
+    {
+        return source.LastPart;
+    }
+
+    public static int Count( this NormalizedPath source )
+    {
+        return source.Parts.Count;
+    }
 }

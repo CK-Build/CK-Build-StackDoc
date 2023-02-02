@@ -31,7 +31,6 @@ hello [link](linkToSomething).
     }
 
     [Test]
-    [Ignore( "Solve TODO" )]
     public void TransformLinks_should_run_action_on_every_link()
     {
         var text = @"
@@ -41,8 +40,10 @@ hello [link](linkToSomething).
 ";
         var md = Markdown.Parse( text );
 
-        //TODO: mdRepository has to be set since it is coupled to MdDocument.
-        var sut = new MdDocument( md, "VirtualPath", default );
+        // var mdRepository = SingleRepositoryContext.Stacks.First().Value.Repositories.First().Value;
+        var mdRepository = DummyRepository;
+
+        var sut = new MdDocument( md, "VirtualPath", mdRepository );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -60,9 +61,9 @@ hello [link](linkToSomething).
     public void CheckLinks_FooBarFakeRepo()
     {
         var mdPath = ProjectFolder
-                               .AppendPart( "In" )
-                               .AppendPart( "FooBarFakeRepo" )
-                               .AppendPart( "README.md" );
+                     .AppendPart( "In" )
+                     .AppendPart( "FooBarFakeRepo" )
+                     .AppendPart( "README.md" );
 
         var sut = MdDocument.Load( mdPath, default );
 
@@ -79,18 +80,16 @@ hello [link](linkToSomething).
     }
 
     [Test]
-    [Ignore("Solve TODO")]
     public void TransformLinks_FooBarFakeRepo()
     {
         var mdPath = ProjectFolder
-                               .AppendPart( "In" )
-                               .AppendPart( "FooBarFakeRepo" )
-                               .AppendPart( "README.md" );
+                     .AppendPart( "In" )
+                     .AppendPart( "FooBarFakeRepo" )
+                     .AppendPart( "README.md" );
 
         var calls = 0;
 
-        //TODO: mdRepository has to be set since it is coupled to MdDocument.
-        var sut = MdDocument.Load( mdPath, default );
+        var sut = MdDocument.Load( mdPath, DummyRepository );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -107,31 +106,29 @@ hello [link](linkToSomething).
         var transformedLinks = sut.MarkdownDocument.Descendants().OfType<LinkInline>().ToArray();
         transformedLinks.Should().HaveCount( calls );
 
-        transformedLinks[0].Url.Should().Be( new NormalizedPath( "https://google.fr/AddedPart" ).ResolveDots() );
-        transformedLinks[1].Url.Should().Be( new NormalizedPath( "./Project/README.md/AddedPart" ).ResolveDots() );
-        transformedLinks[2].Url.Should().Be( new NormalizedPath( "./Project/Code.cs/AddedPart" ).ResolveDots() );
+        transformedLinks[0].Url.Should().Be( new NormalizedPath( "https://google.fr/AddedPart" ) );
+        transformedLinks[1].Url.Should().Be( new NormalizedPath( "./Project/README.md/AddedPart" ) );
+        transformedLinks[2].Url.Should().Be( new NormalizedPath( "./Project/Code.cs/AddedPart" ) );
     }
 
     [Test]
-    [Ignore("Solve TODO")]
     public void TransformLinks_should_handle_links_with_dots()
     {
-        // Here we expect a full path because this is the only possible resolution when the scope is 1 file.
-        // If we were working in a repository, the expected result would be relative,
-        // if both file are in the repository indeed.
+        // We expect the text not to be modified because if the link is already relative, there is
+        // no point to change it. It is already well defined in our scope.
+        // Indeed, that does not make much sense to work on a single file.
+
         var expected = new NormalizedPath
         (
-            @"C:\Users\Aymeric.Richard\Downloads\CK-Core-develop\CK.Core\ServiceContainer\SimpleServiceContainer.cs"
+            @"..\ServiceContainer\SimpleServiceContainer.cs"
         );
-//TODO: We expect the text not to be modified because if the link is already relative, there is
-// no point to change it. It is already well defined in our scope.
         var text = @"
 [click](../ServiceContainer/SimpleServiceContainer.cs)
 ";
         var md = Markdown.Parse( text );
 
-        var virtualFile = "C:/Users/Aymeric.Richard/Downloads/CK-Core-develop/CK.Core/AutomaticDI/README.md";
-        var sut = new MdDocument( md, virtualFile, default );
+        var virtualFile = $"{DummyRepository.RootPath}/CK.Core/AutomaticDI/README.md";
+        var sut = new MdDocument( md, virtualFile, DummyRepository );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
