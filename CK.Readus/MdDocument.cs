@@ -18,9 +18,14 @@ public class MdDocument
     public NormalizedPath Directory => OriginPath.RemoveLastPart();
 
     /// <summary>
+    /// File name with extension
+    /// </summary>
+    public string DocumentName => OriginPath.LastPart;
+
+    /// <summary>
     /// File name without extension
     /// </summary>
-    public string DocumentName => Path.GetFileNameWithoutExtension( OriginPath.LastPart );
+    public string DocumentNameWithoutExtension => Path.GetFileNameWithoutExtension( DocumentName );
 
     public MdRepository Parent { get; }
     public IReadOnlyList<MdBoundLink> MarkdownBoundLinks { get; }
@@ -156,6 +161,57 @@ public class MdDocument
         }
     }
 
+    /// <summary>
+    /// Whenever the link target a directory, try target file README.md instead.
+    /// </summary>
+    /// <returns>If the link is not a directory, return the link.
+    /// If the link is a directory, return README.md if exists, else return the link.</returns>
+    public NormalizedPath TransformTargetDirectory( IActivityMonitor monitor, NormalizedPath link )
+    {
+        // I think this is true. May be wrong.
+        if
+        (
+            link.RootKind
+            is NormalizedPathRootKind.RootedBySeparator
+            or NormalizedPathRootKind.RootedByDoubleSeparator
+            or NormalizedPathRootKind.RootedByURIScheme
+        )
+            return link;
+
+        var repositories = Parent.Parent.Repositories;
+        var mdDocuments = repositories.Values
+                                      .Select( mdRepository => mdRepository.DocumentationFiles )
+                                      .SelectMany( documents => documents.Values )
+                                      .ToArray();
+        NormalizedPath virtuallyRootedLink;
+        try
+        {
+            virtuallyRootedLink = RelativePath.Combine( link ).ResolveDots();
+        }
+        catch( InvalidOperationException exception )
+        {
+            // I would improve this if necessary.
+            // Needs a ResolveDots methods that won't throw but still resolve dots while giving
+            // a correct result.
+            monitor.Error( "Out of our known virtual root", exception );
+            return link;
+        }
+
+        var potentialMatch = virtuallyRootedLink.AppendPart( "README.md" );
+
+        foreach( var mdDocument in mdDocuments )
+        {
+            var virtuallyRootedDocumentPath = mdDocument.RelativePath.AppendPart( DocumentName );
+
+            if( potentialMatch.Equals( virtuallyRootedDocumentPath ) ) return link.AppendPart( "README.md" );
+
+            if( virtuallyRootedLink.Equals( virtuallyRootedDocumentPath ) ) return link;
+        }
+
+        return link;
+    }
+
+
     public void Apply( IActivityMonitor monitor )
     {
         if( IsError ) throw new Exception( "I don't know" );
@@ -167,6 +223,4 @@ public class MdDocument
             link.MarkdownReference.Url = link.Current;
         }
     }
-
-
 }

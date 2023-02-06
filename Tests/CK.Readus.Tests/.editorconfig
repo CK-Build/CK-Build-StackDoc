@@ -1,0 +1,3 @@
+﻿[TestBase.cs]
+resharper_unused_member_local_highlighting = error
+resharper_unused_auto_property_accessor_local_highlighting = error

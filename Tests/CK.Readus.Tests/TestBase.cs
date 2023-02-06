@@ -14,6 +14,7 @@ public class TestBase
     {
         GenerateContexts();
         GenerateRepositories();
+        GenerateDocument();
     }
 
     /// <summary>
@@ -40,6 +41,16 @@ public class TestBase
     /// When building for example a MdDocument, use RootPath as base for the MdDocument path.
     /// </summary>
     public MdRepository DummyRepository { get; private set; }
+
+    /// <summary>
+    /// 1 Document within a context that contains a single stack with a single repository.
+    /// </summary>
+    public MdDocument DummyDocument { get; private set; }
+
+    /// <summary>
+    /// 1 Document within a context that contains a single stack with 2 repositories with cross references.
+    /// </summary>
+    public MdDocument DocumentWithinMultiRepositoryStack { get; private set; }
 
     private void GenerateContexts()
     {
@@ -91,6 +102,39 @@ public class TestBase
         DummyRepository = context.Stacks.First().Value.Repositories.First().Value;
     }
 
+    private void GenerateDocument()
+    {
+        {
+            var context = CreateContext
+            (
+                "SimpleStack",
+                new[]
+                {
+                    ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                }
+            );
+
+            var repository = context.Stacks.First().Value.Repositories.First().Value;
+            DummyDocument = repository.DocumentationFiles.First().Value;
+        }
+
+        {
+            var context = CreateContext
+            (
+                "SimpleStackWithCrossRef",
+                new[]
+                {
+                    ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                    ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
+                }
+            );
+
+            var repository = context.Stacks.First().Value.Repositories.First().Value;
+            DocumentWithinMultiRepositoryStack = repository.DocumentationFiles.First().Value;
+        }
+    }
+
+    // ReSharper disable once UnusedMember.Local
     private MdContext CreateContext( (string stackName, (string local, string remote)[] repositories )[] stacks )
     {
         throw new NotImplementedException( "Until it is proven useful, I'm not going to implement this" );

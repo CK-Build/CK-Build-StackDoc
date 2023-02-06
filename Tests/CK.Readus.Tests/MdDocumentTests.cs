@@ -143,4 +143,78 @@ hello [link](linkToSomething).
         sut.Apply( Monitor );
         sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( expected );
     }
+
+     // @formatter:off
+    [Test]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\README.md" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\Code.cs" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\SomeDocumentation.md" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\someFile" )]
+    [TestCase( @"./Project/Code.cs" )]
+    [TestCase( @"./Project/README.md" )]
+    // @formatter:on
+    public void TransformTargetDirectory_should_return_same_link_when_target_a_file( string link )
+    {
+        TransformAndAssert( link, DummyDocument, link );
+    }
+
+    [Test]
+    [TestCase( @"./Project" )]
+    public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme
+    ( string linkString )
+    {
+        var link = new NormalizedPath( linkString );
+        var expected = link.AppendPart( "README.md" );
+
+        TransformAndAssert( link, DummyDocument, expected );
+    }
+
+    [Test]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\AnotherProject" )]
+    public void TransformTargetDirectory_should_return_same_link_when_target_a_directory_that_does_not_contains_a_readme
+    ( string link )
+    {
+        TransformAndAssert( link, DummyDocument, link );
+    }
+
+    [Test]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project" )]
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\" )]
+    [TestCase( @"https://github.com/Invenietis/FooBarFakeRepo2" )]
+    public void TransformTargetDirectory_should_return_same_link_when_target_out_of_scope( string link )
+    {
+        TransformAndAssert( link, DummyDocument, link );
+    }
+
+   [Test]
+   [TestCase( @"../../FooBarFakeRepo2" )]
+   public void TransformTargetDirectory_should_return_same_link_when_target_out_of_virtual_root( string link )
+    {
+        TransformAndAssert( link, DummyDocument, link );
+    }
+
+   [Test]
+   [TestCase( @"../FooBarFakeRepo2" )]
+   public void TransformTargetDirectory_should_return_same_link_when_target_does_not_exist( string link )
+    {
+        TransformAndAssert( link, DummyDocument, link );
+    }
+
+   [Test]
+   [TestCase( @"./Project" )]
+   public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme_cross_repo
+   ( string linkString )
+   {
+       var link = new NormalizedPath( linkString );
+       var expected = link.AppendPart( "README.md" );
+
+       TransformAndAssert( link, DocumentWithinMultiRepositoryStack, expected );
+   }
+
+
+    private void TransformAndAssert( string link, MdDocument document, string expected )
+    {
+        var sut = document.TransformTargetDirectory( Monitor, link );
+        sut.Should().Be( expected );
+    }
 }

@@ -107,6 +107,14 @@ public class MdRepository
     /// If the link is a directory, return README.md if exists, else return the link.</returns>
     public NormalizedPath TransformTargetDirectory( IActivityMonitor monitor, NormalizedPath link )
     {
+        // If a folder is named README.md, that is going to act wrong.
+        // var candidate = link.AppendPart( "README.md" );
+        // foreach( var (path, mdDocument) in DocumentationFiles )
+        // {
+        //     var match = link.Equals( path );
+        // }
+        // I need the virtual root to make it work like this
+
         //TODO: add it to the chain of transformations
         //TODO: handle relative paths
         // TODO: I can't determine if the target is a directory without this. Is it ok ?

@@ -102,7 +102,7 @@ public class MdContext
         throw new NotImplementedException();
     }
 
-    private Action<IActivityMonitor, NormalizedPath>[] GetChecks(MdDocument mdDocument)
+    private Action<IActivityMonitor, NormalizedPath>[] GetChecks( MdDocument mdDocument )
     {
         var mdRepository = mdDocument.Parent;
         var mdStack = mdRepository.Parent;
@@ -110,20 +110,21 @@ public class MdContext
         var repoCheck = mdRepository.CheckRepository;
         var stackCheck = mdStack.CheckStack;
 
-        var checks = new[] { repoCheck, stackCheck};
+        var checks = new[] { repoCheck, stackCheck };
 
         return checks;
     }
 
-    private Func<IActivityMonitor, NormalizedPath, NormalizedPath>[] GetTransforms(MdDocument mdDocument)
+    private Func<IActivityMonitor, NormalizedPath, NormalizedPath>[] GetTransforms( MdDocument mdDocument )
     {
         var mdRepository = mdDocument.Parent;
         var mdStack = mdRepository.Parent;
 
-        var repoCheck = mdRepository.TransformRepository;
-        var stackCheck = mdStack.TransformCrossRepositoryUrl;
+        var transformRepository = mdRepository.TransformRepository;
+        var transformCrossRepositoryUrl = mdStack.TransformCrossRepositoryUrl;
+        var transformTargetDirectory = mdDocument.TransformTargetDirectory;
 
-        var checks = new[] { repoCheck, stackCheck};
+        var checks = new[] { transformRepository, transformCrossRepositoryUrl, transformTargetDirectory };
 
         return checks;
     }
