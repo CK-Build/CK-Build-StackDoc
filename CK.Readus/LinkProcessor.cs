@@ -48,16 +48,7 @@ internal class LinkProcessor
 
             isOk = isOk && mdDocument.IsOk;
         }
-
-
-        if( isOk )
-        {
-            foreach( var mdDocument in mdDocuments )
-            {
-                mdDocument.Apply( monitor );
-            }
-        }
-
+        
         // Errors
 
         foreach( var mdDocument in mdDocuments )

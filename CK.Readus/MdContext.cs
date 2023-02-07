@@ -22,6 +22,15 @@ public class MdContext
     // private IList<Action<IActivityMonitor, NormalizedPath>> _checkers;
     public NormalizedPath OutputPath { get; private set; }
 
+    //TODO: Make it IEnumerable<MdDocument>
+    internal MdDocument[] AllDocuments => Stacks.Values
+                                                .SelectMany( s => s.Repositories.Values )
+                                                .SelectMany( repository => repository.DocumentationFiles.Values )
+                                                .ToArray();
+
+    internal bool IsOk { get; private set; }
+    internal bool IsError => !IsOk;
+
     public MdContext
     (
         IEnumerable<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)> stacks
@@ -70,12 +79,16 @@ public class MdContext
     public void WriteHtml( IActivityMonitor monitor )
     {
         Throw.CheckArgument( OutputPath.HasParts );
+       var isOk = true;
 
         foreach( var (name, mdStack) in Stacks )
         {
-            if( EnsureProcessing( monitor, mdStack ) )
-                mdStack.Generate( monitor, OutputPath );
+            var processingOk = EnsureProcessing( monitor, mdStack );
+            isOk = isOk && processingOk;
         }
+
+        IsOk = isOk;
+        Apply( monitor );
     }
 
     private bool EnsureProcessing( IActivityMonitor monitor, MdStack mdStack )
@@ -99,7 +112,21 @@ public class MdContext
         return isOk;
         // Configure and run the processing
         // If any error is raised, return false.
-        throw new NotImplementedException();
+    }
+
+    private void Apply( IActivityMonitor monitor )
+    {
+        if( IsError ) return;
+
+        foreach( var mdDocument in AllDocuments )
+        {
+            mdDocument.Apply( monitor );
+        }
+
+        foreach( var (name, mdStack) in Stacks )
+        {
+            mdStack.Generate( monitor, OutputPath );
+        }
     }
 
     private Action<IActivityMonitor, NormalizedPath>[] GetChecks( MdDocument mdDocument )
