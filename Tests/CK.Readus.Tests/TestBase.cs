@@ -1,6 +1,8 @@
 ﻿// ReSharper disable MemberCanBeProtected.Global
 // NUnit needs it public
 
+using System.Text;
+
 namespace CK.Readus.Tests;
 
 public class TestBase
@@ -16,6 +18,80 @@ public class TestBase
         GenerateRepositories();
         GenerateDocument();
     }
+
+    #region Display helper content
+
+    public static string GetContextContent( string title, MdContext context, string notes = null )
+    {
+        var builder = new StringBuilder();
+        // indentation level
+        var i = string.Empty;
+        void IndentUp() => i = i + "  ";
+        void IndentDown() => i = i.Remove( i.Length - 2, 2 );
+        StringBuilder Add( string line ) => builder.AppendLine( i + line );
+
+        var (stackName, mdStack) = context.Stacks.First();
+        var repositoriesCount = mdStack.Repositories.Count;
+
+        Add( $"<=> Property {title} <=>" );
+        if( notes is not null ) Add( notes );
+        Add( $"Stack {stackName} with {repositoriesCount} Repositories" );
+        IndentUp();
+        foreach( var (repositoryName, mdRepository) in mdStack.Repositories )
+        {
+            var documentationFilesCount = mdRepository.DocumentationFiles.Count;
+            Add( $"Repository {repositoryName} contains {documentationFilesCount} md files" );
+            IndentUp();
+
+            foreach( var (fullPath, mdDocument) in mdRepository.DocumentationFiles )
+            {
+                var linkCount = mdDocument.MarkdownBoundLinks.Count;
+                Add( $"'{fullPath}' with {linkCount} links" );
+            }
+
+            IndentDown();
+            Add( "<=> Details <=>" );
+            IndentUp();
+            foreach( var (fullPath, mdDocument) in mdRepository.DocumentationFiles )
+            {
+                Add( $"'{fullPath}' links:" );
+
+                IndentUp();
+
+                foreach( var link in mdDocument.MarkdownBoundLinks )
+                {
+                    Add( link.OriginPath );
+                }
+
+                IndentDown();
+            }
+
+            IndentDown();
+        }
+
+        IndentDown();
+        return builder.ToString();
+    }
+
+    public static string GetContextContent( string repositoryName, MdRepository repository )
+    {
+        var context = repository.Parent.Parent;
+        var local = repository.RootPath;
+        var remote = repository.RemoteUrl;
+        var notes = $"Expose repository: {remote} on disk '{local}'";
+        return GetContextContent( repositoryName, context, notes );
+    }
+
+    public static string GetContextContent( string repositoryName, MdDocument document )
+    {
+        var context = document.Parent.Parent.Parent;
+        var remote = document.Parent.RemoteUrl;
+        var path = document.OriginPath;
+        var notes = $"Expose document '{path}' from repository: {remote}";
+        return GetContextContent( repositoryName, context, notes );
+    }
+
+    #endregion
 
     /// <summary>
     /// 1 SimpleStack.
