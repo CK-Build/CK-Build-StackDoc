@@ -100,37 +100,6 @@ public class MdRepository
         //TODO: check when the link has no attached text (so is useless).
     }
 
-    /// <summary>
-    /// Whenever the link target a directory, try target file README.md instead.
-    /// </summary>
-    /// <returns>If the link is not a directory, return the link.
-    /// If the link is a directory, return README.md if exists, else return the link.</returns>
-    public NormalizedPath TransformTargetDirectory( IActivityMonitor monitor, NormalizedPath link )
-    {
-        // If a folder is named README.md, that is going to act wrong.
-        // var candidate = link.AppendPart( "README.md" );
-        // foreach( var (path, mdDocument) in DocumentationFiles )
-        // {
-        //     var match = link.Equals( path );
-        // }
-        // I need the virtual root to make it work like this
-
-        //TODO: add it to the chain of transformations
-        //TODO: handle relative paths
-        // TODO: I can't determine if the target is a directory without this. Is it ok ?
-        // Maybe I can do it !! =>
-        // I can try to look first for an existing path that is (link + README.md) and loop over all files
-        // A matching file would mean that is a directory (but we don't even care we can just return the match)
-        if( Directory.Exists( link ) is false ) return link;
-
-        var readme = link.AppendPart( "README.md" );
-
-        // ReSharper disable once ConvertIfStatementToReturnStatement
-        if( File.Exists( readme ) ) return readme;
-
-        return link;
-    }
-
     public NormalizedPath TransformRepository( IActivityMonitor monitor, NormalizedPath link )
     {
         var transformed = new NormalizedPath( link );
@@ -156,20 +125,5 @@ public class MdRepository
         }
 
         return transformed;
-    }
-
-    /// <summary>
-    /// Determine if the link target is a file from our system.
-    /// </summary>
-    /// <param name="link">Absolute link to a file.</param>
-    /// <exception cref="ArgumentException"></exception>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
-    [Obsolete( "This implementation is wrong" )]
-    private bool IsOur( NormalizedPath link )
-    {
-        if( link.IsRelative() ) throw new ArgumentException( "Expects absolute path", nameof( link ) );
-
-        return link.StartsWith( RootPath );
     }
 }

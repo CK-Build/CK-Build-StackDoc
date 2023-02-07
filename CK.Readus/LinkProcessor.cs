@@ -10,8 +10,6 @@ public class LinkProcessor
     (
         IActivityMonitor monitor,
         MdDocument[] mdDocuments,
-        // Action<IActivityMonitor, NormalizedPath>[] checks,
-        // Func<IActivityMonitor, NormalizedPath, NormalizedPath>[] transforms
         Func<MdDocument, Action<IActivityMonitor, NormalizedPath>[]> getChecks,
         Func<MdDocument, Func<IActivityMonitor, NormalizedPath, NormalizedPath>[]> getTransforms
     )

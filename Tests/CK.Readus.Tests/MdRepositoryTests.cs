@@ -105,47 +105,4 @@ Thanks for the click !
         sut.Apply( Monitor );
         theLink.Url.Should().Be( "clickMe.html" );
     }
-
-    // // @formatter:off
-    // [Test]
-    // [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\README.md" )]
-    // [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\Code.cs" )]
-    // [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\SomeDocumentation.md" )]
-    // [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\someFile" )]
-    // [TestCase( @"./Project/Code.cs" )]
-    // [TestCase( @"./Project/README.md" )]
-    // // @formatter:on
-    // public void TransformTargetDirectory_should_return_same_link_when_target_a_file( string link )
-    // {
-    //     TransformAndAssert( link, DummyRepository, link );
-    // }
-    //
-    // [Test]
-    // [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project" )]
-    // [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\" )]
-    // [TestCase( @"./Project" )]
-    // [TestCase( @"../../FooBarFakeRepo2" )]
-    // public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme
-    // ( string linkString )
-    // {
-    //     var link = new NormalizedPath( linkString );
-    //     var expected = link.AppendPart( "README.md" );
-    //
-    //     TransformAndAssert( link, DummyRepository, expected );
-    // }
-    //
-    // [Test]
-    // [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\AnotherProject" )]
-    // [TestCase( @"https://github.com/Invenietis/FooBarFakeRepo2" )] // This can't be resolved at this level
-    // public void TransformTargetDirectory_should_return_same_link_when_target_a_directory_that_does_not_contains_a_readme( string link )
-    // {
-    //     TransformAndAssert( link, DummyRepository, link );
-    // }
-
-    private void TransformAndAssert( string link, MdRepository repository, string expected )
-    {
-        var sut = repository.TransformTargetDirectory( Monitor, link );
-        sut.Should().Be( expected );
-    }
-
 }
