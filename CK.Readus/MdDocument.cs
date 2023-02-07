@@ -6,7 +6,7 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus;
 
-public class MdDocument
+internal class MdDocument
 {
     public MarkdownDocument MarkdownDocument { get; }
     public NormalizedPath OriginPath { get; }

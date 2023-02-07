@@ -3,7 +3,7 @@ using Markdig;
 
 namespace CK.Readus;
 
-public class MdRepository
+internal class MdRepository
 {
     public string RepositoryName { get; }
 

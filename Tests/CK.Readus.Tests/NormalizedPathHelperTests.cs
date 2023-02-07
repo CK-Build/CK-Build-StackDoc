@@ -2,7 +2,7 @@
 
 namespace CK.Readus.Tests;
 
-public class NormalizedPathHelperTests : TestBase
+internal class NormalizedPathHelperTests : TestBase
 {
     [Test]
     [TestCase( "", "", "" )]

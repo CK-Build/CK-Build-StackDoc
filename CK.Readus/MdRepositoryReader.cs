@@ -6,7 +6,7 @@ namespace CK.Readus;
 /// <summary>
 /// Factory for <see cref="MdRepository"/>.
 /// </summary>
-public class MdRepositoryReader
+internal class MdRepositoryReader
 {
     public MdRepository ReadPath
     (

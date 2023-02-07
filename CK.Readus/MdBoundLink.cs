@@ -3,7 +3,7 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus;
 
-public enum LinkType
+internal enum LinkType
 {
     Unknown,
     External,
@@ -13,7 +13,7 @@ public enum LinkType
     InternalDirectory, // May be something that has to target a toc or a readme.md
 }
 
-public class MdBoundLink
+internal class MdBoundLink
 {
     public LinkType LinkType { get; }
 

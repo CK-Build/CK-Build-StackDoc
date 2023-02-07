@@ -2,7 +2,7 @@
 
 namespace CK.Readus;
 
-public class LinkProcessor
+internal class LinkProcessor
 {
     public LinkProcessor() { }
 

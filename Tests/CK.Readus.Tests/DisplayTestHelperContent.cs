@@ -1,6 +1,6 @@
 ﻿namespace CK.Readus.Tests;
 
-public class DisplayTestHelperContent : TestBase
+internal class DisplayTestHelperContent : TestBase
 {
     [Test]
     public void DisplayContent()

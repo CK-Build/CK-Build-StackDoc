@@ -6,7 +6,7 @@ using Markdig.Syntax;
 
 namespace CK.Readus;
 
-public class MdStack
+internal class MdStack
 {
     public MdContext Parent { get; }
 

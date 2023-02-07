@@ -3,7 +3,7 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus.Tests;
 
-public class MdRepositoryTests : TestBase
+internal class MdRepositoryTests : TestBase
 {
     [SetUp]
     public void SetUp()

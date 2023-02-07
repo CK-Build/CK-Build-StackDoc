@@ -1,6 +1,6 @@
 ﻿namespace CK.Readus.Tests;
 
-public class MdStackTests : TestBase
+internal class MdStackTests : TestBase
 {
     [SetUp]
     public void SetUp()

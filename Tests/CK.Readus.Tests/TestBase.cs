@@ -5,7 +5,7 @@ using System.Text;
 
 namespace CK.Readus.Tests;
 
-public class TestBase
+internal class TestBase
 {
     public IActivityMonitor Monitor => TestHelper.Monitor;
     public NormalizedPath ProjectFolder => TestHelper.TestProjectFolder;

@@ -1,6 +1,6 @@
 ﻿namespace CK.Readus.Tests;
 
-public class DocumentationCrawlerTests : TestBase
+internal class DocumentationCrawlerTests : TestBase
 {
     private readonly NormalizedPath _inFolder;
     private readonly NormalizedPath _fooBarSolutionFolder;

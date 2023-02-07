@@ -4,7 +4,7 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus.Tests;
 
-public class MdDocumentTests : TestBase
+internal class MdDocumentTests : TestBase
 {
     [Test]
     public void CheckLinks_should_run_action_on_every_link()
