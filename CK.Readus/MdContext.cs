@@ -120,11 +120,16 @@ public class MdContext
         var mdRepository = mdDocument.Parent;
         var mdStack = mdRepository.Parent;
 
-        var transformRepository = mdRepository.TransformRepository;
-        var transformCrossRepositoryUrl = mdStack.TransformCrossRepositoryUrl;
         var transformTargetDirectory = mdDocument.TransformTargetDirectory;
+        var transformCrossRepositoryUrl = mdStack.TransformCrossRepositoryUrl;
+        var transformRepository = mdRepository.TransformRepository;
 
-        var checks = new[] { transformRepository, transformCrossRepositoryUrl, transformTargetDirectory };
+        var checks = new[]
+        {
+            transformTargetDirectory,
+            transformRepository,
+            transformCrossRepositoryUrl,
+        };
 
         return checks;
     }
