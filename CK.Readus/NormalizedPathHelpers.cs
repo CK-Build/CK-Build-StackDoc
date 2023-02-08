@@ -20,13 +20,15 @@ internal static class NormalizedPathHelpers
         if( source.RootKind != target.RootKind ) // No proxy
         {
             if( target.IsRooted ) return new NormalizedPath( target );
-            if( source.IsRooted ) return source.Combine( target ).ResolveDots( source.Parts.Any() ? 1 : 0 );
+            // if( source.IsRooted ) return source.Combine( target ).ResolveDots( source.Parts.Any() ? 1 : 0 );
+            if( source.IsRooted ) return source.Combine( target ).ResolveDotsSmart();
         }
         // if( source.IsRooted || target.IsRooted ) throw new NotImplementedException();
 
         if( source.Equals( target ) ) return ReturnProxy( "" );
 
-        if( target.StartsWith( source ) ) return ReturnProxy( target.RemoveFirstPart( source.Parts.Count ) );
+        if( target.StartsWith( source ) )
+            return ReturnProxy( target.RemoveFirstPart( source.Parts.Count ).ResolveDotsSmart() );
         if( source.StartsWith( target ) )
         {
             var moveUpBy = source.Parts.Count - target.Parts.Count;
@@ -72,7 +74,8 @@ internal static class NormalizedPathHelpers
             (
                 new NormalizedPath( result )
                 .Combine( suffix )
-                .ResolveDots( rootPartCount )
+                // .ResolveDots( rootPartCount )
+                .ResolveDotsSmart()
             );
         }
     }

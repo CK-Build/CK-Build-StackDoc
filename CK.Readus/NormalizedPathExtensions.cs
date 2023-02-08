@@ -23,4 +23,17 @@ internal static class NormalizedPathExtensions
     {
         return source.Parts.Count;
     }
+
+    public static NormalizedPath ResolveDotsSmart( this NormalizedPath path )
+    {
+        var leadingDots = 0;
+        foreach( var part in path.Parts )
+        {
+            if( part.Equals( ".." ) || part.Equals( "." ) )
+                leadingDots++;
+            else break;
+        }
+
+        return path.ResolveDots( leadingDots );
+    }
 }

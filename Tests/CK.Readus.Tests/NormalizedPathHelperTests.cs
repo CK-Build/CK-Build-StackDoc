@@ -28,6 +28,42 @@ internal class NormalizedPathHelperTests : TestBase
         CreateRelativeTester( sourceString, targetString, expectedString );
     }
 
+    [Test]
+    [TestCase( "~/", "~/", "" )]
+    [TestCase( "~/Project/A/B/C", "~/Project/A/", "../.." )]
+    [TestCase( "~/Project/A/B/C", "~/Project/A/B/C/D", "D" )]
+    [TestCase( "~/Project/A/B/C/D", "~/Project/A/B/C/D", "" )]
+    [TestCase( "~/A/B/C", "~/Project/A/B/C/D", "../../../Project/A/B/C/D" )]
+    [TestCase( "~/A/B/C/E/F/G", "~/Project/A/B/C/D", "../../../../../../Project/A/B/C/D" )]
+    [TestCase( "~/C", "~/Project/A/B/C/D", "../Project/A/B/C/D" )]
+    [TestCase( "~/B", "~/Project/A/B/C/D", "../Project/A/B/C/D" )]
+    [TestCase( "~/A/B/C", "~/C/D", "../../../C/D" )]
+    [TestCase( "~/B", "~/Project/A/B/C/B/D", "../Project/A/B/C/B/D" )]
+    [TestCase( "~/Project", "~/Project/../B", "../B" )]
+    [TestCase( "~/./~user/Pictures", "~/./~user/Documents/A", @"../Documents/A" )]
+    public void CreateRelative_experiments_rooted_by_first_part // virtual root
+    (
+        string sourceString,
+        string targetString,
+        string expectedString
+    )
+    {
+        CreateRelativeTester( sourceString, targetString, expectedString );
+    }
+
+    [TestCase( "~/Project", "~/../Project/../B", "../../B" )]
+    [TestCase( "~/Project", "~/Project/../../B", "../../B" )]
+    [TestCase( "~/Project", "~/Project/../../B/../A", "../../A" )]
+    public void CreateRelative_experiments_rooted_by_first_part_out_of_root // virtual root
+    (
+        string sourceString,
+        string targetString,
+        string expectedString
+    )
+    {
+        CreateRelativeTester( sourceString, targetString, expectedString );
+    }
+
     // @formatter:off
     [Test]
     [TestCase( "/", "/", "" )]
