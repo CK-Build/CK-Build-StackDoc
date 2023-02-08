@@ -109,7 +109,6 @@ internal class NormalizedPathHelperTests : TestBase
         CreateRelativeTester( sourceString, targetString, expectedString );
     }
 
-
     private static void CreateRelativeTester( string sourceString, string targetString, string expectedString )
     {
         var source = new NormalizedPath( sourceString );

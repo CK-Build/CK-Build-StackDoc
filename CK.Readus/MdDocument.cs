@@ -111,11 +111,9 @@ internal class MdDocument
     {
         foreach( var link in MarkdownBoundLinks )
         {
-            //TODO: I should transform current ? So each transformation can be chained instead of
-            // overriding the preceding one.
             var transformed = transform( monitor, link.Current );
-            // I'm not sure this is true but I keep it for now.
-            // Debug.Assert( transformed.IsRooted, "transformed.IsRooted" );
+            //TODO: try add this when virtual root is a thing
+            // Debug.Assert( transformed.RootKind is NormalizedPathRootKind.RootedByFirstPart, "transformed.RootKind is NormalizedPathRootKind.RootedByFirstPart" );
 
             if( transformed.StartsWith( Directory ) )
             {
@@ -142,12 +140,6 @@ internal class MdDocument
                 if( link.LinkType.Equals( LinkType.External ) )
                     transformed = source.CreateRelative( target );
                 // transformed become internal ?
-
-                //  var moveUpBy = source.Parts.Count;
-                //
-                //  var result = "";
-                //  for( var i = 0; i < moveUpBy; i++ ) result += "../";
-                // transformed = new NormalizedPath( result ).Combine( target );
             }
 
             monitor.Info
@@ -178,6 +170,7 @@ internal class MdDocument
         )
             return link;
 
+        //TODO: This probably has to iterate over all documents from all stacks
         var repositories = Parent.Parent.Repositories;
         var mdDocuments = repositories.Values
                                       .Select( mdRepository => mdRepository.DocumentationFiles )
