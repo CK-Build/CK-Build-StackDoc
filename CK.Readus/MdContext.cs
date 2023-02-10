@@ -1,13 +1,38 @@
-﻿using CK.Core;
+﻿using System.Diagnostics;
+using CK.Core;
 
 namespace CK.Readus;
 
 // If the name can me Md[..]Context with [..] being after "Stack" alphabetically,
 // the solution explorer will display all the components in the right order.
 
+[DebuggerDisplay( "{Stacks.Count} stacks" )]
 public class MdContext
 {
-    private NormalizedPath _virtualRoot = new NormalizedPath( "~" );
+    internal NormalizedPath VirtualRoot { get; private set; }
+
+    internal NormalizedPath AttachToVirtualRoot( NormalizedPath path )
+    {
+        // TODO: if the path is relative, that wont work
+        // if the path is an url that won't work too
+        // actually that smells shit
+
+        if( path.StartsWith( VirtualRoot ) is false )
+            throw new InvalidOperationException
+            (
+                $"Either this method should not have been called or there is a bug in VirtualRoot computing."
+              + $" Path is {path} and VirtualRoot is {VirtualRoot}"
+            );
+
+        var virtualPath = new NormalizedPath( "~" ).Combine( path.RemoveFirstPart( VirtualRoot.Count() ) );
+        Debug.Assert
+        (
+            virtualPath.RootKind == NormalizedPathRootKind.RootedByFirstPart,
+            "virtualPath.RootKind == NormalizedPathRootKind.RootedByFirstPart"
+        );
+
+        return virtualPath;
+    }
 
     /// <summary>
     /// Key is stack name.
@@ -36,14 +61,20 @@ public class MdContext
         IEnumerable<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)> stacks
     ) : this()
     {
-        foreach( var (stackName, repositories) in stacks ) Init( stackName, repositories );
+        Init( stacks.ToArray() );
         // Parameters could be stacks at least. Or a list of repositories from where we create stacks.
         // Probably here needs to run all the things to make it ready to report or act.
     }
 
     public MdContext( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
-    : this() =>
-    Init( stackName, repositories );
+    : this
+    (
+        new (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)[]
+        {
+            new( stackName, repositories ),
+        }
+    ) { }
+    // => Init( stackName, repositories );
 
     private MdContext()
     {
@@ -53,14 +84,60 @@ public class MdContext
         // _checkers = new List<Action<IActivityMonitor, NormalizedPath>>();
     }
 
-    private void Init( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
+    private void Init
+    (
+        (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)[] stacks
+    )
     {
         var monitor = new ActivityMonitor(); // I don't know if I should just pass it as ctor arg.
 
-        var mdStack = MdStack.Load( monitor, stackName, repositories, this );
-        if( Stacks.TryAdd( stackName, mdStack ) is false )
-            throw new ArgumentException( "This stack is already registered: ", nameof( stackName ) );
+        // I could probably take only one repo per stack => only when multi stack
+        var repositoriesPaths = stacks
+                                   .SelectMany( s => s.repositories )
+                                   .Select( r => r.local )
+                                   .ToArray();
+
+        var commonRoot = repositoriesPaths[0];
+        foreach( var repositoryPath in repositoriesPaths.Skip( 1 ) )
+        {
+            commonRoot = repositoryPath.GetCommonLeadingParts( commonRoot );
+            // now what ?
+        }
+
+        VirtualRoot = commonRoot;
+
+        foreach( var (stackName, repositories) in stacks )
+        {
+            var mdStack = MdStack.Load( monitor, stackName, repositories, this );
+            if( Stacks.TryAdd( stackName, mdStack ) is false )
+                throw new ArgumentException( "This stack is already registered: ", stackName );
+        }
+
+
+        //TODO: Create virtual root
+        //TODO: Apply checks and transform
+        //TODO: This is then initialized with everything ready :
+        // the next step is a method that apply output changes like .md to .html
+        //TODO: Could add the possibility to add a stack or a repo afterward and process it directly.
+        // if the apply has been called, it should not be possible to add more elements
     }
+    // private void Init( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
+    //  {
+    //      var monitor = new ActivityMonitor(); // I don't know if I should just pass it as ctor arg.
+    //
+    //      var mdStack = MdStack.Load( monitor, stackName, repositories, this );
+    //      if( Stacks.TryAdd( stackName, mdStack ) is false )
+    //          throw new ArgumentException( "This stack is already registered: ", nameof( stackName ) );
+    //
+    //      var virtualRoot = "~/path/to/shortest/common/directory/between/stacks";
+    //      foreach( var (_, stack) in Stacks ) { }
+    //      //TODO: Create virtual root
+    //      //TODO: Apply checks and transform
+    //      //TODO: This is then initialized with everything ready :
+    //      // the next step is a method that apply output changes like .md to .html
+    //      //TODO: Could add the possibility to add a stack or a repo afterward and process it directly.
+    //      // if the apply has been called, it should not be possible to add more elements
+    //  }
 
     public void SetOutputPath( NormalizedPath outputPath )
     {
@@ -79,7 +156,7 @@ public class MdContext
     public void WriteHtml( IActivityMonitor monitor )
     {
         Throw.CheckArgument( OutputPath.HasParts );
-       var isOk = true;
+        var isOk = true;
 
         foreach( var (name, mdStack) in Stacks )
         {

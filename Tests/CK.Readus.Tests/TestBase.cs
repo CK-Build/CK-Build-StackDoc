@@ -107,6 +107,18 @@ internal class TestBase
     public MdContext CrossRefContext { get; private set; }
 
     /// <summary>
+    /// 2 stacks with both 4 repositories.
+    /// One stack has cross ref inside.
+    /// </summary>
+    public MdContext MultiStackContext { get; private set; }
+
+    /// <summary>
+    /// 2 stacks, having 1 that target the other stack.
+    /// Cross refs inside a stack.
+    /// </summary>
+    public MdContext MultiStackWithCrossRefContext { get; private set; }
+
+    /// <summary>
     /// 1 SimpleStack.
     /// 1 Repository.
     /// </summary>
@@ -162,6 +174,65 @@ internal class TestBase
                 ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
             }
         );
+
+        MultiStackContext = CreateContext
+        (
+            nameof( MultiStackContext ),
+            new[]
+            {
+                new ValueTuple<string, IEnumerable<(string local, string remote)>>
+                (
+                    "SimpleStack",
+                    new[]
+                    {
+                        ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                        ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
+                        ("FooBarFakeRepo3", "https://github.com/Invenietis/FooBarFakeRepo3"),
+                        ("FooBarFakeRepo4", "https://github.com/Invenietis/FooBarFakeRepo4"),
+                    }
+                ),
+                new ValueTuple<string, IEnumerable<(string local, string remote)>>
+                (
+                    "SimpleStackWithCrossRef",
+                    new[]
+                    {
+                        ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                        ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
+                        ("FooBarFakeRepo3", "https://github.com/Invenietis/FooBarFakeRepo3"),
+                        ("FooBarFakeRepo4", "https://github.com/Invenietis/FooBarFakeRepo4"),
+                    }
+                ),
+            }
+        );
+
+        MultiStackWithCrossRefContext = CreateContext
+        (
+            nameof( MultiStackWithCrossRefContext ),
+            new[]
+            {
+                new ValueTuple<string, IEnumerable<(string local, string remote)>>
+                (
+                    "SimpleStack",
+                    new[]
+                    {
+                        ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                        ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepoTwo"),
+                        ("FooBarFakeRepo3", "https://github.com/Invenietis/FooBarFakeRepo3"),
+                        ("FooBarFakeRepo4", "https://github.com/Invenietis/FooBarFakeRepo4"),
+                    }
+                ),
+                new ValueTuple<string, IEnumerable<(string local, string remote)>>
+                (
+                    "StackWithRefsToOtherStacks",
+                    new[]
+                    {
+                        ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
+                        ("RepoWithCrossRefsWithRefsToSimpleStack", "https://github.com/Invenietis/RepoWithCrossRefsWithRefsToSimpleStack"),
+                        ("RepoWithRefsToSimpleStack", "https://github.com/Invenietis/RepoWithRefsToSimpleStack"),
+                    }
+                ),
+            }
+        );
     }
 
     private void GenerateRepositories()
@@ -210,13 +281,53 @@ internal class TestBase
         }
     }
 
-    // ReSharper disable once UnusedMember.Local
-    private MdContext CreateContext( (string stackName, (string local, string remote)[] repositories )[] stacks )
+    private MdContext CreateContext
+    ( string contextName, (string stackName, IEnumerable<(string local, string remote)> repositories )[] stacks )
     {
-        throw new NotImplementedException( "Until it is proven useful, I'm not going to implement this" );
+        var stacksInfo =
+        new List<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )>
+        ( stacks.Length );
+
+        foreach( var (stackName, repositoriesQuery) in stacks )
+        {
+            stackName.Should().NotBeNullOrWhiteSpace();
+            var basePath = InFolder.AppendPart( stackName );
+            var repositories = repositoriesQuery.ToArray();
+            repositories.Should().NotBeEmpty();
+            var repositoriesInfo = new List<(NormalizedPath local, NormalizedPath remote)>( repositories.Length );
+
+            foreach( var (local, remote) in repositories )
+            {
+                repositoriesInfo.Add( (basePath.AppendPart( local ), remote) );
+            }
+
+            stacksInfo.Add( (stackName, repositoriesInfo) );
+        }
+
+        return CreateContext( contextName, stacksInfo.ToArray() );
     }
 
-    private MdContext CreateContext( string stackName, (string local, string remote)[] repositories )
+    private MdContext CreateContext
+    (
+        string contextName,
+        (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )[] stacks
+    )
+    {
+        var mdContext = new MdContext( stacks );
+
+        var outputPath = OutFolder.AppendPart( $"_{contextName}" );
+        TestHelper.CleanupFolder( outputPath );
+        mdContext.SetOutputPath( outputPath );
+
+        foreach( var (stackName, repositories) in stacks )
+        {
+            ContextGenericAssertions( stackName, repositories.ToArray(), mdContext );
+        }
+
+        return mdContext;
+    }
+
+    public MdContext CreateContext( string stackName, (string local, string remote)[] repositories )
     {
         stackName.Should().NotBeNullOrWhiteSpace();
         repositories.Should().NotBeEmpty();
@@ -231,6 +342,24 @@ internal class TestBase
 
         #region Assertions
 
+        ContextGenericAssertions( stackName, repositoriesInfo.ToArray(), mdContext );
+
+        #endregion
+
+        var outputPath = OutFolder.AppendPart( $"_{stackName}" );
+        TestHelper.CleanupFolder( outputPath );
+        mdContext.SetOutputPath( outputPath );
+
+        return mdContext;
+    }
+
+    private static void ContextGenericAssertions
+    (
+        string stackName,
+        (NormalizedPath local, NormalizedPath remote)[] repositories,
+        MdContext mdContext
+    )
+    {
         mdContext.Stacks.Should().ContainKey( stackName );
         var mdStack = mdContext.Stacks[stackName];
         mdStack.StackName.Should().Be( stackName );
@@ -252,13 +381,5 @@ internal class TestBase
                 }
             }
         }
-
-        #endregion
-
-        var outputPath = OutFolder.AppendPart( $"_{stackName}" );
-        TestHelper.CleanupFolder( outputPath );
-        mdContext.SetOutputPath( outputPath );
-
-        return mdContext;
     }
 }

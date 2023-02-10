@@ -119,4 +119,20 @@ internal class NormalizedPathHelperTests : TestBase
         source.Path.Should().Be( new NormalizedPath( sourceString ) );
         target.Path.Should().Be( new NormalizedPath( targetString ) );
     }
+
+    [Test]
+    [TestCase( "", "", "" )]
+    [TestCase( "Project/A/B/C", "Project/A/", "Project/A" )]
+    [TestCase( "Project/A/B/C", "Project/A/B/C/D", "Project/A/B/C" )]
+    [TestCase( "Project/A/B/C/D", "Project/A/B/C/D", "Project/A/B/C/D" )]
+    [TestCase( "A/B/C", "Project/A/B/C/D", "" )]
+    [TestCase( "A/B/C/E/F/G", "Project/A/B/C/D", "" )]
+    [TestCase( "C", "Project/A/B/C/D", "" )]
+    [TestCase( "B", "Project/A/B/C/D", "" )]
+    [TestCase( "A/B/C", "C/D", "" )]
+    [TestCase( "A/B/C", "C/D", "" )]
+    public void GetCommonLeadingParts_should_return_leading_parts( string sourceString, string targetString, string expectedString )
+    {
+        new NormalizedPath( sourceString ).GetCommonLeadingParts( targetString ).Should().Be( expectedString );
+    }
 }

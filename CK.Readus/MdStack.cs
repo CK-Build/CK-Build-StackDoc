@@ -6,6 +6,7 @@ using Markdig.Syntax;
 
 namespace CK.Readus;
 
+[DebuggerDisplay("{StackName}: {Repositories.Count} repositories") ]
 internal class MdStack
 {
     public MdContext Parent { get; }

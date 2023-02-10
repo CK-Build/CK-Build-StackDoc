@@ -60,9 +60,12 @@ internal class MdDocument
     internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path, MdRepository mdRepository )
     {
         MarkdownDocument = markdownDocument;
-        OriginPath = Path.GetFullPath( path ); //TODO: Should enforce full path. Add tests on repo / stack level
+        if( path.IsRelative() )
+            throw new ArgumentException( $"{nameof( Path )} should be absolute" );
+        OriginPath = path;
         Parent = mdRepository;
-        Current = OriginPath;
+        Current = Parent.Parent.Parent.AttachToVirtualRoot( OriginPath );
+        // Current = OriginPath;
 
         MarkdownBoundLinks = MarkdownDocument
                              .Descendants()

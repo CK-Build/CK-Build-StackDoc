@@ -17,4 +17,13 @@ internal class MdContextTests : TestBase
 
         context.WriteHtml( Monitor );
     }
+
+
+    [Test]
+    public void should_have_common_virtual_root()
+    {
+        var context = MultiStackContext;
+     
+        context.VirtualRoot.Should().Be( InFolder );
+    }
 }

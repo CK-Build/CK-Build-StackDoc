@@ -20,27 +20,20 @@ internal class MdRepositoryTests : TestBase
     [Test]
     public void Generate_does_not_throw()
     {
-        var factory = new MdRepositoryReader();
-        var remoteUrl = string.Empty;
-        var repositoryName = "FooBarFakeRepo";
-        var rootPath = InFolder.AppendPart( repositoryName );
+        MdRepository sut = DummyRepository;
 
-        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
-
-
-        sut.RepositoryName.Should().Be( repositoryName );
-        sut.EnsureLinks( Monitor );
-
-        var outputFolder = ProjectFolder
-                           .AppendPart( "Out" )
-                           .AppendPart( repositoryName + "_generated" );
-        Directory.CreateDirectory( outputFolder );
-        sut.Generate( Monitor, outputFolder );
+        sut.Generate( Monitor, DummyRepository.Parent.Parent.OutputPath );
     }
 
     [Test]
+    [Explicit("I may do rework that make this test adaptable")]
     public void Generate_should_output_html()
     {
+        // If the MdRepository get public (with the factory), I may change the behavior to this :
+        // The client instantiate a context, simple.
+        // Then it create some repositories thanks to the factory
+        // Those repositories can be added to the context.
+
         var repositoryName = "TheMightyProject";
         var tempPath = InFolder.AppendPart( "Temp" )
                                .AppendPart( repositoryName );
@@ -52,7 +45,7 @@ internal class MdRepositoryTests : TestBase
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
-        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
+        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default);
 
         var outputFolder = ProjectFolder
                            .AppendPart( "Out" )
@@ -70,6 +63,7 @@ internal class MdRepositoryTests : TestBase
     }
 
     [Test]
+    [Explicit("SUT is obsolete")]
     public void EnsureLinks_transform_links_to_inner_md_file_to_html_equivalent()
     {
         var mdText = @"

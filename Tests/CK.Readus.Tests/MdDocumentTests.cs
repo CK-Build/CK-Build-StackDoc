@@ -9,14 +9,7 @@ internal class MdDocumentTests : TestBase
     [Test]
     public void CheckLinks_should_run_action_on_every_link()
     {
-        var text = @"
-# Title
-
-hello [link](linkToSomething).
-";
-        var md = Markdown.Parse( text );
-
-        var sut = new MdDocument( md, "virtualPath", default );
+        var sut = DummyDocument;
 
         var hasBeenCalled = false;
 
@@ -43,7 +36,12 @@ hello [link](linkToSomething).
         // var mdRepository = SingleRepositoryContext.Stacks.First().Value.Repositories.First().Value;
         var mdRepository = DummyRepository;
 
-        var sut = new MdDocument( md, "VirtualPath", mdRepository );
+        var sut = new MdDocument
+        (
+            md,
+            "C:/Dev/Signature/CK.Readus/Tests/CK.Readus.Tests/In/SimpleStack/FooBarFakeRepo1/VirtualPath",
+            mdRepository
+        );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -60,12 +58,14 @@ hello [link](linkToSomething).
     [Test]
     public void CheckLinks_FooBarFakeRepo()
     {
-        var mdPath = ProjectFolder
-                     .AppendPart( "In" )
-                     .AppendPart( "FooBarFakeRepo" )
-                     .AppendPart( "README.md" );
+        // var mdPath = ProjectFolder
+        //              .AppendPart( "In" )
+        //              .AppendPart( "FooBarFakeRepo" )
+        //              .AppendPart( "README.md" );
+        //
+        // var sut = MdDocument.Load( mdPath, default );
 
-        var sut = MdDocument.Load( mdPath, default );
+        var sut = DummyDocument;
 
         var calls = 0;
 
@@ -82,14 +82,9 @@ hello [link](linkToSomething).
     [Test]
     public void TransformLinks_FooBarFakeRepo()
     {
-        var mdPath = ProjectFolder
-                     .AppendPart( "In" )
-                     .AppendPart( "FooBarFakeRepo" )
-                     .AppendPart( "README.md" );
+        var sut = DummyDocument;
 
         var calls = 0;
-
-        var sut = MdDocument.Load( mdPath, DummyRepository );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -186,30 +181,30 @@ hello [link](linkToSomething).
         TransformAndAssert( link, DummyDocument, link );
     }
 
-   [Test]
-   [TestCase( @"../../FooBarFakeRepo2" )]
-   public void TransformTargetDirectory_should_return_same_link_when_target_out_of_virtual_root( string link )
+    [Test]
+    [TestCase( @"../../FooBarFakeRepo2" )]
+    public void TransformTargetDirectory_should_return_same_link_when_target_out_of_virtual_root( string link )
     {
         TransformAndAssert( link, DummyDocument, link );
     }
 
-   [Test]
-   [TestCase( @"../FooBarFakeRepo2" )]
-   public void TransformTargetDirectory_should_return_same_link_when_target_does_not_exist( string link )
+    [Test]
+    [TestCase( @"../FooBarFakeRepo2" )]
+    public void TransformTargetDirectory_should_return_same_link_when_target_does_not_exist( string link )
     {
         TransformAndAssert( link, DummyDocument, link );
     }
 
-   [Test]
-   [TestCase( @"./Project" )]
-   public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme_cross_repo
-   ( string linkString )
-   {
-       var link = new NormalizedPath( linkString );
-       var expected = link.AppendPart( "README.md" );
+    [Test]
+    [TestCase( @"./Project" )]
+    public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme_cross_repo
+    ( string linkString )
+    {
+        var link = new NormalizedPath( linkString );
+        var expected = link.AppendPart( "README.md" );
 
-       TransformAndAssert( link, DocumentWithinMultiRepositoryStack, expected );
-   }
+        TransformAndAssert( link, DocumentWithinMultiRepositoryStack, expected );
+    }
 
 
     private void TransformAndAssert( string link, MdDocument document, string expected )

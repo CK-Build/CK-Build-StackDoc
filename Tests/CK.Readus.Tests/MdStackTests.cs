@@ -34,7 +34,7 @@ internal class MdStackTests : TestBase
             repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = MdStack.Load( Monitor, name, repositories, default );
+        var sut = MdStack.Load( Monitor, name, repositories, SimpleContext );
 
         var outputPath = OutFolder.AppendPart( "SimpleStack_Generated" );
 
@@ -65,7 +65,7 @@ internal class MdStackTests : TestBase
             repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = MdStack.Load( Monitor, name, repositories, default );
+        var sut = MdStack.Load( Monitor, name, repositories, SimpleContext );
         foreach( var (repositoryName, mdRepository) in sut.Repositories )
         {
             mdRepository.EnsureLinks( Monitor );
@@ -79,6 +79,7 @@ internal class MdStackTests : TestBase
     }
 
     [Test]
+    [Explicit("Uses an obsolete method")]
     public void Generate_should_write_simple_stack_with_cross_links_and_transform_to_html()
     {
         var name = "foo-bar";
@@ -149,7 +150,7 @@ internal class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, default );
+        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, CrossRefContext );
 
         var urlsUnderTest = new[]
         {
@@ -209,7 +210,7 @@ internal class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, default );
+        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, CrossRefContext );
 
         var urlsUnderTest = new[]
         {
@@ -262,7 +263,7 @@ internal class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, default );
+        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, CrossRefContext );
 
         var urlUnderTest = repoRemotes[1];
         var expected = "FooBarFakeRepo2";
@@ -297,4 +298,5 @@ internal class MdStackTests : TestBase
         sut = stack.TransformCrossRepositoryUrl( Monitor, sut );
         sut.Should().Be( expected );
     }
+
 }

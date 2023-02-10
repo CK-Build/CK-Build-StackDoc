@@ -1,8 +1,10 @@
-﻿using CK.Core;
+﻿using System.Diagnostics;
+using CK.Core;
 using Markdig;
 
 namespace CK.Readus;
 
+[DebuggerDisplay("{Parent.StackName}::{RepositoryName}: {DocumentationFiles.Count} documents")]
 internal class MdRepository
 {
     public string RepositoryName { get; }
@@ -82,12 +84,10 @@ internal class MdRepository
             return path;
         }
 
-        //TODO: Maybe it should check existence only.
-        Directory.CreateDirectory( outputPath );
-
-        foreach( var (sourcePath, markdown) in DocumentationFiles )
+        foreach( var (sourcePath, mdDocument) in DocumentationFiles )
         {
-            var html = markdown.MarkdownDocument.ToHtml();
+            //TODO: mdDocument.Current
+            var html = mdDocument.MarkdownDocument.ToHtml();
             var path = ResolvePath( sourcePath );
 
             Directory.CreateDirectory( path.RemoveLastPart() );
