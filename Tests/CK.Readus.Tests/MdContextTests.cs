@@ -17,6 +17,13 @@ internal class MdContextTests : TestBase
 
         context.WriteHtml( Monitor );
     }
+    [Test]
+    public void WriteHtml_multi_stack_with_cross_stack_ref_should_ensure_calls_to_all_checks_and_transforms()
+    {
+        var context = MultiStackWithCrossRefContext;
+
+        context.WriteHtml( Monitor );
+    }
 
     [Test]
     public void should_have_common_virtual_root()

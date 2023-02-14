@@ -4,27 +4,28 @@
 
 Implement :
 
-- Handle virtual root ~
+- ✔️Handle virtual root ~
 - Generate ToC
-- Transformers idempotent => Tests several runs of the same one, then all in different orders
+- 🗑️Transformers idempotent => Tests several runs of the same one, then all in different orders
 - Support github branches link
 - Copy internal targeted files (img and cs code)
 - Check url availability
-- A link to a directory should look for a README.md (or index)
-- Handle file extension transformation in the right component
-- Resolve dots at some point
+- ✔️A link to a directory should look for a README.md (or index)
+- ✔️Handle file extension transformation in the right component
+- ✔️Resolve dots at some point
+- Simple CSS
 
 Test :
 
-- Test stack with a context ready to use
-- Test helpers
-- TestBase helper : create methods that output generated context information like local path to help creating tests.
+- ✔️Test stack with a context ready to use
+- ✔️Test helpers
+- ✔️TestBase helper : create methods that output generated context information like local path to help creating tests.
 
 Other :
 
 - Rename solution and projects
 - Cleanup and optimize
-- Internal as much as possible
+- ✔️Internal as much as possible
 - Getting started (with demo app)
 
 ## Notes

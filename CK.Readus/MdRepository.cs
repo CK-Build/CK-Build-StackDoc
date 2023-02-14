@@ -4,7 +4,7 @@ using Markdig;
 
 namespace CK.Readus;
 
-[DebuggerDisplay("{Parent.StackName}::{RepositoryName}: {DocumentationFiles.Count} documents")]
+[DebuggerDisplay( "{Parent.StackName}::{RepositoryName}: {DocumentationFiles.Count} documents" )]
 internal class MdRepository
 {
     public string RepositoryName { get; }
@@ -58,22 +58,14 @@ internal class MdRepository
 
         NormalizedPath ResolvePath( NormalizedPath file )
         {
-            var parts = file.Parts;
-            var relativePath = parts.SkipWhile( p => p.Equals( RepositoryName ) is false );
-            var path = outputPath;
-            foreach( var part in relativePath ) path = path.AppendPart( part );
-//TODO: Remove html transformation as it is handled elsewhere
-            var lastPart = path.LastPart.Replace( ".md", ".html" );
-            path = path.RemoveLastPart().AppendPart( lastPart );
-
+            var path = outputPath.Combine( file.RemovePrefix( "~" ) );
             return path;
         }
 
-        foreach( var (sourcePath, mdDocument) in DocumentationFiles )
+        foreach( var (_, mdDocument) in DocumentationFiles )
         {
-            //TODO: mdDocument.Current
             var html = mdDocument.MarkdownDocument.ToHtml();
-            var path = ResolvePath( sourcePath );
+            var path = ResolvePath( mdDocument.Current );
 
             Directory.CreateDirectory( path.RemoveLastPart() );
             File.WriteAllText( path, html );
@@ -84,5 +76,4 @@ internal class MdRepository
     {
         //TODO: check when the link has no attached text (so is useless).
     }
-
 }

@@ -235,7 +235,7 @@ public class MdContext
 
         var transformCrossRepositoryUrl = mdStack.TransformCrossRepositoryUrl;
         var transformTargetDirectory = mdDocument.TransformTargetDirectory;
-// check crossRepo transform how they handle with virtual root
+
         var transforms = new[]
         {
             transformCrossRepositoryUrl,
