@@ -11,6 +11,13 @@ public class MdContext
 {
     internal NormalizedPath VirtualRoot { get; private set; }
 
+    /// <summary>
+    /// It will throw if the link cannot be processed.
+    /// Only links that can match the virtual root can be processed
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     internal NormalizedPath AttachToVirtualRoot( NormalizedPath path )
     {
         // TODO: if the path is relative, that wont work
@@ -74,7 +81,6 @@ public class MdContext
             new( stackName, repositories ),
         }
     ) { }
-    // => Init( stackName, repositories );
 
     private MdContext()
     {
@@ -93,15 +99,14 @@ public class MdContext
 
         // I could probably take only one repo per stack => only when multi stack
         var repositoriesPaths = stacks
-                                   .SelectMany( s => s.repositories )
-                                   .Select( r => r.local )
-                                   .ToArray();
+                                .SelectMany( s => s.repositories )
+                                .Select( r => r.local )
+                                .ToArray();
 
         var commonRoot = repositoriesPaths[0];
         foreach( var repositoryPath in repositoriesPaths.Skip( 1 ) )
         {
             commonRoot = repositoryPath.GetCommonLeadingParts( commonRoot );
-            // now what ?
         }
 
         VirtualRoot = commonRoot;
@@ -113,31 +118,19 @@ public class MdContext
                 throw new ArgumentException( "This stack is already registered: ", stackName );
         }
 
+        IsOk = true;
 
-        //TODO: Create virtual root
-        //TODO: Apply checks and transform
+        foreach( var (name, mdStack) in Stacks )
+        {
+            var processingOk = EnsureProcessing( monitor, mdStack );
+            IsOk = IsOk && processingOk;
+        }
+
         //TODO: This is then initialized with everything ready :
         // the next step is a method that apply output changes like .md to .html
         //TODO: Could add the possibility to add a stack or a repo afterward and process it directly.
         // if the apply has been called, it should not be possible to add more elements
     }
-    // private void Init( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
-    //  {
-    //      var monitor = new ActivityMonitor(); // I don't know if I should just pass it as ctor arg.
-    //
-    //      var mdStack = MdStack.Load( monitor, stackName, repositories, this );
-    //      if( Stacks.TryAdd( stackName, mdStack ) is false )
-    //          throw new ArgumentException( "This stack is already registered: ", nameof( stackName ) );
-    //
-    //      var virtualRoot = "~/path/to/shortest/common/directory/between/stacks";
-    //      foreach( var (_, stack) in Stacks ) { }
-    //      //TODO: Create virtual root
-    //      //TODO: Apply checks and transform
-    //      //TODO: This is then initialized with everything ready :
-    //      // the next step is a method that apply output changes like .md to .html
-    //      //TODO: Could add the possibility to add a stack or a repo afterward and process it directly.
-    //      // if the apply has been called, it should not be possible to add more elements
-    //  }
 
     public void SetOutputPath( NormalizedPath outputPath )
     {
@@ -156,15 +149,13 @@ public class MdContext
     public void WriteHtml( IActivityMonitor monitor )
     {
         Throw.CheckArgument( OutputPath.HasParts );
-        var isOk = true;
-
-        foreach( var (name, mdStack) in Stacks )
+        var postProcessingResult = EnsurePostProcessing( monitor );
+        if( postProcessingResult is false )
         {
-            var processingOk = EnsureProcessing( monitor, mdStack );
-            isOk = isOk && processingOk;
+            monitor.Error( "Post processing failed" );
+            return;
         }
 
-        IsOk = isOk;
         Apply( monitor );
     }
 
@@ -191,9 +182,27 @@ public class MdContext
         // If any error is raised, return false.
     }
 
+    private bool EnsurePostProcessing( IActivityMonitor monitor )
+    {
+        var processor = new LinkProcessor();
+
+        var processingResult = processor.Process( monitor, AllDocuments, default, GetPostProcessTransforms );
+
+        foreach( var mdDocument in AllDocuments )
+        {
+            mdDocument.Current = Path.ChangeExtension( mdDocument.Current, "html" );
+        }
+
+        return processingResult;
+    }
+
     private void Apply( IActivityMonitor monitor )
     {
-        if( IsError ) return;
+        if( IsError )
+        {
+            monitor.Error( "Cannot apply when context is in error" );
+            return;
+        }
 
         foreach( var mdDocument in AllDocuments )
         {
@@ -224,18 +233,32 @@ public class MdContext
         var mdRepository = mdDocument.Parent;
         var mdStack = mdRepository.Parent;
 
-        var transformTargetDirectory = mdDocument.TransformTargetDirectory;
         var transformCrossRepositoryUrl = mdStack.TransformCrossRepositoryUrl;
-        var transformRepository = mdRepository.TransformRepository;
-
-        var checks = new[]
+        var transformTargetDirectory = mdDocument.TransformTargetDirectory;
+// check crossRepo transform how they handle with virtual root
+        var transforms = new[]
         {
-            transformTargetDirectory,
-            transformRepository,
             transformCrossRepositoryUrl,
+            transformTargetDirectory,
         };
 
-        return checks;
+        return transforms;
+    }
+
+    private Func<IActivityMonitor, NormalizedPath, NormalizedPath>[] GetPostProcessTransforms( MdDocument mdDocument )
+    {
+        var mdRepository = mdDocument.Parent;
+        var mdStack = mdRepository.Parent;
+
+        var transformToHtml = mdDocument.TransformToHtml;
+        var resolveVirtualRoot = mdDocument.TransformResolveVirtualRootAsConcretePath;
+        var transforms = new[]
+        {
+            transformToHtml,
+            resolveVirtualRoot,
+        };
+
+        return transforms;
     }
 
     // ResolveLinks() // Apply all transformations

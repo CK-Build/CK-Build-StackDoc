@@ -18,7 +18,6 @@ internal class MdContextTests : TestBase
         context.WriteHtml( Monitor );
     }
 
-
     [Test]
     public void should_have_common_virtual_root()
     {
@@ -27,6 +26,5 @@ internal class MdContextTests : TestBase
         SimpleContext.VirtualRoot.Should().Be( InFolder.AppendPart( "SimpleStack" ) );
         SingleRepositoryContext.VirtualRoot.Should().Be( InFolder.AppendPart( "SimpleStack" ).AppendPart( "FooBarFakeRepo1" ) );
         CrossRefContext.VirtualRoot.Should().Be( InFolder.AppendPart( "SimpleStackWithCrossRef" ) );
-
     }
 }

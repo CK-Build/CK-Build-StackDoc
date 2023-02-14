@@ -6,7 +6,7 @@ using Markdig.Syntax;
 
 namespace CK.Readus;
 
-[DebuggerDisplay("{StackName}: {Repositories.Count} repositories") ]
+[DebuggerDisplay( "{StackName}: {Repositories.Count} repositories" )]
 internal class MdStack
 {
     public MdContext Parent { get; }
@@ -85,27 +85,25 @@ internal class MdStack
         }
     }
 
-    //TODO: Where to put the transformations methods ?
-    // They can be in a Md* class, like here.
-    // But it could be handled differently, anywhere actually.
-    // It depend how it is called, but the whole stack of Md* has access to everything.
     /// <summary>
-    /// If the link target is in the stack, return its path relative to the stack virtual root.
+    /// If the link target is in any of the stacks, return its path virtually rooted.
     /// </summary>
     /// <param name="monitor"></param>
     /// <param name="link"></param>
     /// <returns></returns>
     public NormalizedPath TransformCrossRepositoryUrl( IActivityMonitor monitor, NormalizedPath link )
     {
-        if( link.IsRelative() ) return link;
+        if( link.IsRelative() ) return link; // Should not happen
 
         var isUri = link.RootKind == NormalizedPathRootKind.RootedByURIScheme;
-
+//TODO: rooted by first part with ~ can shortcut return link
         return ResolveScope();
 
         NormalizedPath ResolveScope()
         {
-            foreach( var (name, mdRepository) in Repositories )
+            var repositories = Parent.Stacks.Values.SelectMany( s => s.Repositories );
+            // We want repositories but it can be done at context level with all repo from all stacks.
+            foreach( var (_, mdRepository) in repositories )
             {
                 var target = isUri ? mdRepository.RemoteUrl : mdRepository.RootPath;
 
@@ -117,10 +115,9 @@ internal class MdStack
                 if( linkIsInScope is false ) continue;
 
                 var linkRelativeToItsRepository = link.RemoveFirstPart( target.Parts.Count );
-                var rootlessLink = new NormalizedPath( mdRepository.RepositoryName )
-                .Combine( linkRelativeToItsRepository );
+                var virtualLink = mdRepository.VirtualRoot.Combine( linkRelativeToItsRepository );
 
-                return rootlessLink;
+                return virtualLink;
             }
 
             return link;

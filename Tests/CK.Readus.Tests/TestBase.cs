@@ -34,6 +34,7 @@ internal class TestBase
         var repositoriesCount = mdStack.Repositories.Count;
 
         Add( $"<=> Property {title} <=>" );
+        Add( $"Virtual root: {context.VirtualRoot}" );
         if( notes is not null ) Add( notes );
         Add( $"Stack {stackName} with {repositoriesCount} Repositories" );
         IndentUp();
@@ -226,9 +227,11 @@ internal class TestBase
                     "StackWithRefsToOtherStacks",
                     new[]
                     {
+                        // @formatter:off
                         ("FooBarFakeRepo2", "https://github.com/Invenietis/FooBarFakeRepo2"),
                         ("RepoWithCrossRefsWithRefsToSimpleStack", "https://github.com/Invenietis/RepoWithCrossRefsWithRefsToSimpleStack"),
                         ("RepoWithRefsToSimpleStack", "https://github.com/Invenietis/RepoWithRefsToSimpleStack"),
+                        // @formatter:on
                     }
                 ),
             }

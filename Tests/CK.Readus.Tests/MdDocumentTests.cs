@@ -39,7 +39,7 @@ hello [link](linkToSomething).
         var sut = new MdDocument
         (
             md,
-            "C:/Dev/Signature/CK.Readus/Tests/CK.Readus.Tests/In/SimpleStack/FooBarFakeRepo1/VirtualPath",
+            InFolder.Combine( "SimpleStack/FooBarFakeRepo1/VirtualPath.md" ),
             mdRepository
         );
 
@@ -51,8 +51,13 @@ hello [link](linkToSomething).
         }
 
         sut.TransformLinks( Monitor, Do );
+        sut.MarkdownBoundLinks.Single().Current.Should().Be( "~/linkToSomething/AddedPart" );
         sut.Apply( Monitor );
-        sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( "linkToSomething/AddedPart" );
+        sut.MarkdownDocument.Descendants()
+           .OfType<LinkInline>()
+           .Single()
+           .Url.Should()
+           .Be( "~/linkToSomething/AddedPart" );
     }
 
     [Test]
@@ -83,7 +88,6 @@ hello [link](linkToSomething).
     public void TransformLinks_FooBarFakeRepo()
     {
         var sut = DummyDocument;
-
         var calls = 0;
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
@@ -102,8 +106,8 @@ hello [link](linkToSomething).
         transformedLinks.Should().HaveCount( calls );
 
         transformedLinks[0].Url.Should().Be( new NormalizedPath( "https://google.fr/AddedPart" ) );
-        transformedLinks[1].Url.Should().Be( new NormalizedPath( "./Project/README.md/AddedPart" ) );
-        transformedLinks[2].Url.Should().Be( new NormalizedPath( "./Project/Code.cs/AddedPart" ) );
+        transformedLinks[1].Url.Should().Be( new NormalizedPath( "~/./Project/README.md/AddedPart" ) );
+        transformedLinks[2].Url.Should().Be( new NormalizedPath( "~/./Project/Code.cs/AddedPart" ) );
     }
 
     [Test]
@@ -112,11 +116,6 @@ hello [link](linkToSomething).
         // We expect the text not to be modified because if the link is already relative, there is
         // no point to change it. It is already well defined in our scope.
         // Indeed, that does not make much sense to work on a single file.
-
-        var expected = new NormalizedPath
-        (
-            @"..\ServiceContainer\SimpleServiceContainer.cs"
-        );
         var text = @"
 [click](../ServiceContainer/SimpleServiceContainer.cs)
 ";
@@ -124,6 +123,11 @@ hello [link](linkToSomething).
 
         var virtualFile = $"{DummyRepository.RootPath}/CK.Core/AutomaticDI/README.md";
         var sut = new MdDocument( md, virtualFile, DummyRepository );
+
+        var expected = new NormalizedPath
+        (
+            $@"{sut.VirtualLocation}/..\ServiceContainer\SimpleServiceContainer.cs"
+        );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
         {
@@ -145,12 +149,13 @@ hello [link](linkToSomething).
     [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\Code.cs" )]
     [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\SomeDocumentation.md" )]
     [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\someFile" )]
-    [TestCase( @"./Project/Code.cs" )]
-    [TestCase( @"./Project/README.md" )]
+    [TestCase( @"~/./Project/Code.cs" )]
+    [TestCase( @"~/./Project/README.md" )]
     // @formatter:on
     public void TransformTargetDirectory_should_return_same_link_when_target_a_file( string link )
     {
-        TransformAndAssert( link, DummyDocument, link );
+        var document = DummyDocument;
+        TransformAndAssert( link, document, link );
     }
 
     [Test]
@@ -158,10 +163,11 @@ hello [link](linkToSomething).
     public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme
     ( string linkString )
     {
-        var link = new NormalizedPath( linkString );
+        var document = DummyDocument;
+        var link = document.VirtualLocation.Combine( linkString );
         var expected = link.AppendPart( "README.md" );
 
-        TransformAndAssert( link, DummyDocument, expected );
+        TransformAndAssert( link, document, expected );
     }
 
     [Test]
@@ -182,17 +188,23 @@ hello [link](linkToSomething).
     }
 
     [Test]
-    [TestCase( @"../../FooBarFakeRepo2" )]
-    public void TransformTargetDirectory_should_return_same_link_when_target_out_of_virtual_root( string link )
+    [TestCase( @"FooBarFakeRepo2" )]
+    public void TransformTargetDirectory_should_return_same_link_when_target_does_not_exist( string link )
     {
-        TransformAndAssert( link, DummyDocument, link );
+        var document = DummyDocument;
+        link = document.VirtualLocation.Combine( link );
+        TransformAndAssert( link, document, link );
     }
 
     [Test]
     [TestCase( @"../FooBarFakeRepo2" )]
-    public void TransformTargetDirectory_should_return_same_link_when_target_does_not_exist( string link )
+    [TestCase( @"../../FooBarFakeRepo2" )]
+    public void TransformTargetDirectory_should_throw_when_above_virtual_root( string link )
     {
-        TransformAndAssert( link, DummyDocument, link );
+        var document = DummyDocument;
+        link = document.VirtualLocation.Combine( link );
+        var action = () => TransformAndAssert( link, document, link );
+        action.Should().Throw<InvalidOperationException>();
     }
 
     [Test]
@@ -200,16 +212,29 @@ hello [link](linkToSomething).
     public void TransformTargetDirectory_should_return_readme_when_target_a_directory_that_contains_a_readme_cross_repo
     ( string linkString )
     {
-        var link = new NormalizedPath( linkString );
+        var document = DocumentWithinMultiRepositoryStack;
+        var link = document.VirtualLocation.Combine( linkString );
         var expected = link.AppendPart( "README.md" );
 
-        TransformAndAssert( link, DocumentWithinMultiRepositoryStack, expected );
+        TransformAndAssert( link, document, expected );
     }
-
 
     private void TransformAndAssert( string link, MdDocument document, string expected )
     {
         var sut = document.TransformTargetDirectory( Monitor, link );
         sut.Should().Be( expected );
+    }
+
+    [Test]
+    [TestCase( "~/README.md", "README.md" )]
+    [TestCase( "~/AnotherProject/WhySoSerious.md", "AnotherProject/WhySoSerious.md" )]
+    [TestCase( "~/Project/README.md", "Project/README.md" )]
+    [TestCase( "~/Project/SomeDocumentation.md", "Project/SomeDocumentation.md" )]
+    public void TransformResolveVirtualRootAsConcretePath_resolve_virtual_root( string link, string expected )
+    {
+        var document = DummyDocument;
+        var result = document.TransformResolveVirtualRootAsConcretePath( Monitor, link );
+
+        result.Should().Be( expected );
     }
 }

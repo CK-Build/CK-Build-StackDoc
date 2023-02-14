@@ -58,7 +58,14 @@ internal class MdBoundLink
 
         OriginPath = new NormalizedPath( MarkdownReference.Url );
 
-        Current = new NormalizedPath( OriginPath );
+        var context = Parent.Parent.Parent.Parent;
+
+        if( OriginPath.IsRelative() )
+            Current = Parent.VirtualLocation.Combine( OriginPath );
+        else if( OriginPath.StartsWith( context.VirtualRoot ) )
+            Current = context.AttachToVirtualRoot( OriginPath );
+        else
+            Current = new NormalizedPath( OriginPath );
 
         //TODO: this should be a check. This should not throw here
         if( OriginPath.IsEmptyPath ) throw new NotImplementedException( "A null link could maybe be deleted" );
@@ -84,10 +91,10 @@ internal class MdBoundLink
             else
                 LinkType = extension switch
                 {
-                ".md" => LinkType.InternalMd,
-                ""    => LinkType.InternalDirectory,
-                ".cs" => LinkType.InternalCode,
-                _     => LinkType.Unknown
+                    ".md" => LinkType.InternalMd,
+                    ""    => LinkType.InternalDirectory,
+                    ".cs" => LinkType.InternalCode,
+                    _     => LinkType.Unknown,
                 };
         }
         else

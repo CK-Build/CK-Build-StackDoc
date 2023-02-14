@@ -42,8 +42,11 @@ internal class MdStackTests : TestBase
     }
 
     [Test]
+    [Explicit( "Was using removed method" )]
     public void Generate_should_write_simple_stack_and_transform_to_html()
     {
+        //TODO: This test could be used when it is possible to add a repository afterward
+        // An other case could be using a stack that has been fed to the context.
         var name = "foo-bar";
 
         var basePath = InFolder.AppendPart( "SimpleStack" );
@@ -68,7 +71,7 @@ internal class MdStackTests : TestBase
         var sut = MdStack.Load( Monitor, name, repositories, SimpleContext );
         foreach( var (repositoryName, mdRepository) in sut.Repositories )
         {
-            mdRepository.EnsureLinks( Monitor );
+            // mdRepository.EnsureLinks( Monitor );
             mdRepository.Apply( Monitor );
         }
 
@@ -79,7 +82,7 @@ internal class MdStackTests : TestBase
     }
 
     [Test]
-    [Explicit("Uses an obsolete method")]
+    [Explicit( "Uses an obsolete method" )]
     public void Generate_should_write_simple_stack_with_cross_links_and_transform_to_html()
     {
         var name = "foo-bar";
@@ -106,7 +109,7 @@ internal class MdStackTests : TestBase
         var sut = MdStack.Load( Monitor, name, repositories, default );
         foreach( var (repositoryName, mdRepository) in sut.Repositories )
         {
-            mdRepository.EnsureLinks( Monitor );
+            // mdRepository.EnsureLinks( Monitor );
             mdRepository.Apply( Monitor );
         }
 
@@ -253,7 +256,7 @@ internal class MdStackTests : TestBase
             "https://github.com/Invenietis/FooBarFakeRepo1",
             "https://github.com/Invenietis/FooBarFakeRepo2",
             "https://github.com/Invenietis/FooBarFakeRepo3",
-            "https://github.com/Invenietis/FooBarFakeRepo4"
+            "https://github.com/Invenietis/FooBarFakeRepo4",
         };
 
         var repositoriesInfo = new List<(NormalizedPath, NormalizedPath)>();
@@ -266,30 +269,32 @@ internal class MdStackTests : TestBase
         var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, CrossRefContext );
 
         var urlUnderTest = repoRemotes[1];
-        var expected = "FooBarFakeRepo2";
+        var expected = "~/FooBarFakeRepo2";
         var sut = mdStack.TransformCrossRepositoryUrl( Monitor, urlUnderTest );
 
         sut.Should().NotBe( urlUnderTest );
         sut.Should().Be( expected );
 
         urlUnderTest = "https://github.com/Invenietis/FooBarFakeRepo2/README.md";
-        expected = repoPaths[1].LastPart().AppendPart( "README.md" );
+        expected = new NormalizedPath( "~" ).AppendPart( repoPaths[1].LastPart ).AppendPart( "README.md" );
         sut = mdStack.TransformCrossRepositoryUrl( Monitor, urlUnderTest );
 
         sut.Should().NotBe( urlUnderTest );
         sut.Should().Be( expected );
     }
 
+    // @formatter:off
     [Test]
     [TestCase( "README.md", "README.md" )]
     [TestCase( "", "" )]
     [TestCase( ".", "." )]
     [TestCase( "A/README.md", "A/README.md" )]
     [TestCase( "../README.md", "../README.md" )]
-    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo2/README.md", "FooBarFakeRepo2/README.md" )]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo2/README.md", "~/FooBarFakeRepo2/README.md" )]
     [TestCase( "https://github.com/Invenietis/UnknownRepo/README.md", "https://github.com/Invenietis/UnknownRepo/README.md" )]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStackWithCrossRef\FooBarFakeRepo1\README.md", @"FooBarFakeRepo1\README.md" )]
-    public void TransformCrossRepositoryUrl_should_be_idempotent( string link, string expected)
+    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStackWithCrossRef\FooBarFakeRepo1\README.md", @"~/FooBarFakeRepo1\README.md" )] //TODO: use TestProjectFolder
+    // @formatter:on
+    public void TransformCrossRepositoryUrl_should_be_idempotent( string link, string expected )
     {
         var stack = CrossRefContext.Stacks.First().Value;
 
@@ -298,5 +303,4 @@ internal class MdStackTests : TestBase
         sut = stack.TransformCrossRepositoryUrl( Monitor, sut );
         sut.Should().Be( expected );
     }
-
 }

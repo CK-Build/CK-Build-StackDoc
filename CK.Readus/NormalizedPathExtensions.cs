@@ -9,6 +9,12 @@ internal static class NormalizedPathExtensions
         return @this.IsRooted is false;
     }
 
+    /// <summary>
+    /// You probably want to pass only rooted paths
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="target"></param>
+    /// <returns></returns>
     public static NormalizedPath CreateRelative( this NormalizedPath source, NormalizedPath target )
     {
         return NormalizedPathHelpers.CreateRelative( source, target );

@@ -5,6 +5,12 @@ namespace CK.Readus;
 
 internal static class NormalizedPathHelpers
 {
+    /// <summary>
+    /// You probably want to pass only rooted paths
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="target"></param>
+    /// <returns></returns>
     public static NormalizedPath CreateRelative( NormalizedPath source, NormalizedPath target )
     {
         NormalizedPath ReturnProxy( NormalizedPath toReturn )

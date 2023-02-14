@@ -26,7 +26,7 @@ internal class MdRepositoryTests : TestBase
     }
 
     [Test]
-    [Explicit("I may do rework that make this test adaptable")]
+    [Explicit( "I may do rework that make this test adaptable" )]
     public void Generate_should_output_html()
     {
         // If the MdRepository get public (with the factory), I may change the behavior to this :
@@ -45,7 +45,7 @@ internal class MdRepositoryTests : TestBase
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
 
-        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default);
+        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
 
         var outputFolder = ProjectFolder
                            .AppendPart( "Out" )
@@ -60,43 +60,5 @@ internal class MdRepositoryTests : TestBase
 
         var content = File.ReadAllText( expectedPath );
         content.Trim().Should().Be( "<h1>Nothing</h1>" );
-    }
-
-    [Test]
-    [Explicit("SUT is obsolete")]
-    public void EnsureLinks_transform_links_to_inner_md_file_to_html_equivalent()
-    {
-        var mdText = @"
-# This is a clear documentation
-
-Let's see how this link behave : [Click me](clickMe.md)
-";
-
-        var mdTextClickMe = @"
-Thanks for the click !
-";
-
-        var repositoryName = "TheMightyProject";
-
-        var tempPath = InFolder.AppendPart( "Temp" )
-                               .AppendPart( repositoryName );
-
-        Directory.CreateDirectory( tempPath );
-        File.WriteAllText( tempPath.AppendPart( "README.md" ), mdText );
-        File.WriteAllText( tempPath.AppendPart( "clickMe.md" ), mdTextClickMe );
-
-        var factory = new MdRepositoryReader();
-        var remoteUrl = string.Empty;
-        var rootPath = tempPath;
-
-        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
-
-        var md = sut.DocumentationFiles[tempPath.AppendPart( "README.md" )].MarkdownDocument;
-        var theLink = md.Descendants().OfType<LinkInline>().First();
-
-        theLink.Url.Should().Be( "clickMe.md" );
-        sut.EnsureLinks( Monitor );
-        sut.Apply( Monitor );
-        theLink.Url.Should().Be( "clickMe.html" );
     }
 }

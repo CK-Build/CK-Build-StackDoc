@@ -10,7 +10,7 @@ internal class LinkProcessor
     (
         IActivityMonitor monitor,
         MdDocument[] mdDocuments,
-        Func<MdDocument, Action<IActivityMonitor, NormalizedPath>[]> getChecks,
+        Func<MdDocument, Action<IActivityMonitor, NormalizedPath>[]>? getChecks,
         Func<MdDocument, Func<IActivityMonitor, NormalizedPath, NormalizedPath>[]> getTransforms
     )
     {
@@ -18,7 +18,7 @@ internal class LinkProcessor
 
         foreach( var mdDocument in mdDocuments )
         {
-            var checks = getChecks( mdDocument );
+            var checks = getChecks?.Invoke( mdDocument );
             var transforms = getTransforms( mdDocument );
 
 
@@ -27,14 +27,16 @@ internal class LinkProcessor
                                      .ConcludeWith( () => $"Processed '{mdDocument.DocumentName}'" );
 
 
-            foreach( var check in checks )
-            {
-                using var checkInfo = monitor
-                                      .OpenInfo( $"Checking '{mdDocument.DocumentName}' with '{check.Method.Name}'" )
-                                      .ConcludeWith( () => $"Checked '{mdDocument.DocumentName}'" );
+            if( checks != null )
+                foreach( var check in checks )
+                {
+                    using var checkInfo = monitor
+                                          .OpenInfo
+                                          ( $"Checking '{mdDocument.DocumentName}' with '{check.Method.Name}'" )
+                                          .ConcludeWith( () => $"Checked '{mdDocument.DocumentName}'" );
 
-                mdDocument.CheckLinks( monitor, check );
-            }
+                    mdDocument.CheckLinks( monitor, check );
+                }
 
             foreach( var transform in transforms )
             {

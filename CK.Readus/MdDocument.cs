@@ -6,6 +6,7 @@ using Markdig.Syntax.Inlines;
 
 namespace CK.Readus;
 
+[DebuggerDisplay( "{Parent.RepositoryName}::{DocumentName}" )]
 internal class MdDocument
 {
     public MarkdownDocument MarkdownDocument { get; }
@@ -48,13 +49,21 @@ internal class MdDocument
     /// <summary>
     /// TODO: Set the relative path and handle extension
     /// See CK.Readus.MdRepository.Generate
+    ///
+    /// Virtually rooted path
     /// </summary>
     public NormalizedPath Current { get; set; }
+
+    /// <summary>
+    /// Directory containing the file with a virtual root.
+    /// </summary>
+    public NormalizedPath VirtualLocation => Current.RemoveLastPart();
 
     /// <summary>
     /// Path relative to the the repository root.
     /// </summary>
     /// <returns></returns>
+    [Obsolete( "Use VirtualLocation instead" )]
     public NormalizedPath RelativePath => Directory.RemoveFirstPart( Parent.RootPath.Parts.Count - 1 );
 
     internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path, MdRepository mdRepository )
@@ -65,7 +74,6 @@ internal class MdDocument
         OriginPath = path;
         Parent = mdRepository;
         Current = Parent.Parent.Parent.AttachToVirtualRoot( OriginPath );
-        // Current = OriginPath;
 
         MarkdownBoundLinks = MarkdownDocument
                              .Descendants()
@@ -115,35 +123,6 @@ internal class MdDocument
         foreach( var link in MarkdownBoundLinks )
         {
             var transformed = transform( monitor, link.Current );
-            //TODO: try add this when virtual root is a thing
-            // Debug.Assert( transformed.RootKind is NormalizedPathRootKind.RootedByFirstPart, "transformed.RootKind is NormalizedPathRootKind.RootedByFirstPart" );
-
-            if( transformed.StartsWith( Directory ) )
-            {
-                // If the link get out of the scope with some ../../../ or else, we may be doomed.
-                var relativeLinkPath = transformed.RemoveFirstPart( Directory.Parts.Count );
-                transformed = relativeLinkPath;
-            }
-            else if( transformed.IsRelative() )
-            {
-                // TODO: I may have forgot that we can target our own repo link. Fuck
-                // I can try to use my full method GetRelative()
-
-                // maybe it's wrong but for now I handle the case the link is relative, so may come from
-                // an other repo.
-                // In the future i may use a specific virtual root like ~
-
-                // target repo2/readme.md
-                // source repo1/project/
-                // i go to ../../../repo2/readme.md
-                var source = RelativePath;
-                var target = transformed;
-                //TODO: here source and/or target are probably wrong
-                // mostly target
-                if( link.LinkType.Equals( LinkType.External ) )
-                    transformed = source.CreateRelative( target );
-                // transformed become internal ?
-            }
 
             monitor.Info
             (
@@ -154,6 +133,23 @@ internal class MdDocument
 
             link.Current = transformed;
         }
+    }
+
+    /// <summary>
+    /// Final transformation that resolve virtual root by creating a relative link equivalent to what could be the origin
+    /// path. Only virtually rooted paths are changed.
+    /// </summary>
+    /// <param name="monitor"></param>
+    /// <param name="link"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public NormalizedPath TransformResolveVirtualRootAsConcretePath( IActivityMonitor monitor, NormalizedPath link )
+    {
+        if( link.IsRelative() ) throw new ArgumentException( "Expected a rooted link." );
+
+        var relative = VirtualLocation.CreateRelative( link );
+
+        return relative;
     }
 
     /// <summary>
@@ -173,40 +169,63 @@ internal class MdDocument
         )
             return link;
 
-        //TODO: This probably has to iterate over all documents from all stacks
-        var repositories = Parent.Parent.Repositories;
-        var mdDocuments = repositories.Values
-                                      .Select( mdRepository => mdRepository.DocumentationFiles )
-                                      .SelectMany( documents => documents.Values )
-                                      .ToArray();
-        NormalizedPath virtuallyRootedLink;
+        if( link.IsRelative() ) throw new ArgumentException( "Link should have a virtual root" );
+
+        var mdDocuments = Parent.Parent.Parent.AllDocuments;
+
+        var potentialMatch = link.AppendPart( "README.md" );
+
+        NormalizedPath potentialMatchDotResolved;
+        // This could be asserted elsewhere
         try
         {
-            virtuallyRootedLink = RelativePath.Combine( link ).ResolveDots();
+            potentialMatchDotResolved = potentialMatch.ResolveDots();
         }
-        catch( InvalidOperationException exception )
+        catch( InvalidOperationException e)
         {
-            // I would improve this if necessary.
-            // Needs a ResolveDots methods that won't throw but still resolve dots while giving
-            // a correct result.
-            monitor.Error( "Out of our known virtual root", exception );
-            return link;
+            monitor.Fatal( $"Invalid link: `{link}`(virtual representation) in document: `{OriginPath}`. Are you missing a target ?", e);
+            throw;
         }
-
-        var potentialMatch = virtuallyRootedLink.AppendPart( "README.md" );
 
         foreach( var mdDocument in mdDocuments )
         {
-            var virtuallyRootedDocumentPath = mdDocument.RelativePath.AppendPart( DocumentName );
+            if( potentialMatchDotResolved.Equals( mdDocument.Current.ResolveDots() ) )
+                return link.AppendPart( "README.md" );
 
-            if( potentialMatch.Equals( virtuallyRootedDocumentPath ) ) return link.AppendPart( "README.md" );
-
-            if( virtuallyRootedLink.Equals( virtuallyRootedDocumentPath ) ) return link;
+            if( link.Equals( mdDocument.Current ) ) return link;
         }
 
         return link;
     }
 
+    public NormalizedPath TransformToHtml( IActivityMonitor monitor, NormalizedPath link )
+    {
+        var transformed = new NormalizedPath( link );
+
+        // for now true
+        // 99% cases we want to transform .md to .html
+        // But then we need to determine which links are to transform
+        // A link has to correspond to a file.
+        // At the very end I may resolve this :
+        // The Current link will have a resolved target.
+        // We can lookup in all the files and if the target match, we change extensions of both
+        // file and link.
+        // Update :
+        // If the link target this file, then act
+        var isMatch = Current.Equals( link );
+
+        if( true )
+        {
+            var extension = Path.GetExtension( transformed.LastPart );
+            if( extension.Equals( ".md" ) )
+            {
+                transformed = Path.ChangeExtension( transformed, ".html" );
+                // Current = Path.ChangeExtension( Current, ".html" );
+            }
+        }
+
+        return transformed;
+    }
 
     public void Apply( IActivityMonitor monitor )
     {
