@@ -102,7 +102,7 @@ internal class MdBoundLink
             LinkType = LinkType.External;
         }
 
-        if( LinkType == LinkType.Unknown ) new ActivityMonitor().Warn( "LinkType could not be determined" );
+        if( LinkType == LinkType.Unknown ) new ActivityMonitor().Warn( $"LinkType could not be determined: {OriginPath}" );
     }
 }
 

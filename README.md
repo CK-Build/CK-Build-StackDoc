@@ -14,6 +14,11 @@ Implement :
 - ✔️Handle file extension transformation in the right component
 - ✔️Resolve dots at some point
 - Simple CSS
+- Support anchors links as foobar.md#anchor
+
+Bugs :
+- Table is broken
+- html links cannot be parsed as markdown links
 
 Test :
 
