@@ -5,7 +5,8 @@
 Implement :
 
 - ✔️Handle virtual root ~
-- Generate ToC
+- ✔️Generate ToC
+- Generate ToC relative to each page
 - 🗑️Transformers idempotent => Tests several runs of the same one, then all in different orders
 - Support github branches link
 - Copy internal targeted files (img and cs code)

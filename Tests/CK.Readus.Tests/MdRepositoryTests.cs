@@ -22,7 +22,7 @@ internal class MdRepositoryTests : TestBase
     {
         MdRepository sut = DummyRepository;
 
-        sut.Generate( Monitor, DummyRepository.Parent.Parent.OutputPath );
+        sut.Generate( Monitor );
     }
 
     [Test]
@@ -51,7 +51,7 @@ internal class MdRepositoryTests : TestBase
                            .AppendPart( "Out" )
                            .AppendPart( repositoryName + "_generated" );
         TestHelper.CleanupFolder( outputFolder );
-        sut.Generate( Monitor, outputFolder );
+        sut.Generate( Monitor );
 
         var expectedPath = outputFolder
                            .AppendPart( repositoryName )
@@ -60,5 +60,27 @@ internal class MdRepositoryTests : TestBase
 
         var content = File.ReadAllText( expectedPath );
         content.Trim().Should().Be( "<h1>Nothing</h1>" );
+    }
+
+    [Test]
+    public void TryGetReadme_should_get_main_readme()
+    {
+        var repo = DummyRepository;
+
+        var found = repo.TryGetReadme( out var readme );
+
+        found.Should().BeTrue();
+        readme.Should().Be( "~/README.md" );
+    }
+
+    [Test]
+    public void TryGetReadme_should_return_false_when_no_readme()
+    {
+        var repo = NoReadmeRepository;
+
+        var found = repo.TryGetReadme( out var readme );
+
+        found.Should().BeFalse();
+        readme.Should().Be( default );
     }
 }

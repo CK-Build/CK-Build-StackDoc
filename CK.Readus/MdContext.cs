@@ -187,7 +187,7 @@ public class MdContext
         // If any error is raised, return false.
     }
 
-    private bool EnsurePostProcessing( IActivityMonitor monitor )
+    private bool EnsurePostProcessing( IActivityMonitor monitor)
     {
         var processor = new LinkProcessor();
 
@@ -196,6 +196,7 @@ public class MdContext
         foreach( var mdDocument in AllDocuments )
         {
             mdDocument.Current = Path.ChangeExtension( mdDocument.Current, "html" );
+            mdDocument.Current = OutputPath.Combine( mdDocument.Current.RemovePrefix( "~" ) );
         }
 
         return processingResult;
@@ -218,6 +219,16 @@ public class MdContext
         {
             mdStack.Generate( monitor, OutputPath );
         }
+
+        // Generate ToC
+        var html = "";
+        foreach( var (_, mdStack) in Stacks )
+        {
+            var toc = mdStack.GenerateToc( monitor );
+            html += toc.ToHtml( Pipeline );
+        }
+
+        File.WriteAllText( OutputPath.AppendPart( "ToC.html" ), html );
     }
 
     private Action<IActivityMonitor, NormalizedPath>[] GetChecks( MdDocument mdDocument )

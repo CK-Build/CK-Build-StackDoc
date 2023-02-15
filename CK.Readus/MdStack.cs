@@ -57,18 +57,14 @@ internal class MdStack
     public MarkdownDocument GenerateToc( IActivityMonitor monitor )
     {
         var builder = new StringBuilder();
-        builder.AppendLine( $"# {StackName}" );
+        builder.AppendLine( $"- {StackName}" );
         builder.AppendLine();
 
         foreach( var (name, mdRepository) in Repositories )
         {
-            builder.AppendLine( $"## {name}" ).AppendLine();
-            var pathToRepo = new NormalizedPath( mdRepository.RepositoryName ).AppendPart( "README.md" );
-            builder.AppendLine( $"[README]({pathToRepo})" ).AppendLine();
-            foreach( var (path, mdDocument) in mdRepository.DocumentationFiles )
-            {
-                builder.AppendLine( $"[{mdDocument.DocumentName}]({mdDocument.Current})" );
-            }
+            var found = mdRepository.TryGetReadme( out var readme );
+            if( found )
+                builder.AppendLine( $"  - [{name}]({readme})" ).AppendLine();
         }
 
         return Markdown.Parse( builder.ToString(), MdContext.Pipeline );
@@ -80,7 +76,7 @@ internal class MdStack
         {
             foreach( var repository in Repositories )
             {
-                repository.Value.Generate( monitor, outputPath );
+                repository.Value.Generate( monitor );
             }
         }
     }

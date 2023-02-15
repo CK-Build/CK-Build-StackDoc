@@ -132,6 +132,13 @@ internal class TestBase
     public MdRepository DummyRepository { get; private set; }
 
     /// <summary>
+    /// 1 Repository within a context that contains a single stack with this single repository.
+    /// When building for example a MdDocument, use RootPath as base for the MdDocument path.
+    /// This repository does not contains any file named README.md
+    /// </summary>
+    public MdRepository NoReadmeRepository { get; private set; }
+
+    /// <summary>
     /// 1 Document within a context that contains a single stack with a single repository.
     /// </summary>
     public MdDocument DummyDocument { get; private set; }
@@ -240,16 +247,25 @@ internal class TestBase
 
     private void GenerateRepositories()
     {
-        var context = CreateContext
+        DummyRepository = CreateContext
         (
             "SimpleStack",
             new[]
             {
                 ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
             }
-        );
+        ).Stacks.First().Value.Repositories.First().Value;
 
-        DummyRepository = context.Stacks.First().Value.Repositories.First().Value;
+        NoReadmeRepository = CreateContext
+        (
+            "StackNoReadme",
+            new[]
+            {
+                ("FooBarFakeRepoNoREADME", "https://github.com/Invenietis/FooBarFakeRepoNoREADME"),
+            }
+        ).Stacks.First().Value.Repositories.First().Value;
+
+
     }
 
     private void GenerateDocument()

@@ -39,6 +39,28 @@ internal class MdRepository
         Parent = parent;
     }
 
+    public bool TryGetReadme( out NormalizedPath readme )
+    {
+        var readmeCandidates = DocumentationFiles
+                               .Values
+                               .Where
+                               (
+                                   d => d.DocumentNameWithoutExtension
+                                         .Equals( "README", StringComparison.OrdinalIgnoreCase )
+                               )
+                               .ToArray();
+
+        if( readmeCandidates.Length == 0 )
+        {
+            readme = default;
+            return false;
+        }
+
+        readme = readmeCandidates.Min( r => r.Current);
+
+        return true;
+    }
+
     public void Apply( IActivityMonitor monitor )
     {
         foreach( var file in DocumentationFiles )
@@ -51,24 +73,16 @@ internal class MdRepository
     /// Output the current state of the documentation as html.
     /// </summary>
     /// <param name="monitor"></param>
-    /// <param name="outputPath"></param>
-    public void Generate( IActivityMonitor monitor, NormalizedPath outputPath )
+    public void Generate( IActivityMonitor monitor )
     {
-        monitor.Info( $"Writing '{RepositoryName}' documentation to '{outputPath}'" );
-
-        NormalizedPath ResolvePath( NormalizedPath file )
-        {
-            var path = outputPath.Combine( file.RemovePrefix( "~" ) );
-            return path;
-        }
+        monitor.Info( $"Writing '{RepositoryName}' documentation to '{Parent.Parent.OutputPath}'" );
 
         foreach( var (_, mdDocument) in DocumentationFiles )
         {
-            var html = mdDocument.MarkdownDocument.ToHtml(MdContext.Pipeline);
-            var path = ResolvePath( mdDocument.Current );
+            var html = mdDocument.MarkdownDocument.ToHtml( MdContext.Pipeline );
 
-            Directory.CreateDirectory( path.RemoveLastPart() );
-            File.WriteAllText( path, html );
+            Directory.CreateDirectory( mdDocument.Current.RemoveLastPart() );
+            File.WriteAllText( mdDocument.Current, html );
         }
     }
 
