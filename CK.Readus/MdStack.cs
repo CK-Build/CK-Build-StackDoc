@@ -71,7 +71,7 @@ internal class MdStack
             }
         }
 
-        return Markdown.Parse( builder.ToString() );
+        return Markdown.Parse( builder.ToString(), MdContext.Pipeline );
     }
 
     public void Generate( IActivityMonitor monitor, NormalizedPath outputPath )

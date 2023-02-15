@@ -66,15 +66,15 @@ internal class MdDocument
     [Obsolete( "Use VirtualLocation instead" )]
     public NormalizedPath RelativePath => Directory.RemoveFirstPart( Parent.RootPath.Parts.Count - 1 );
 
-    internal MdDocument( MarkdownDocument markdownDocument, NormalizedPath path, MdRepository mdRepository )
+    internal MdDocument( string markdownText, NormalizedPath path, MdRepository mdRepository )
     {
-        MarkdownDocument = markdownDocument;
         if( path.IsRelative() )
             throw new ArgumentException( $"{nameof( Path )} should be absolute" );
         OriginPath = path;
         Parent = mdRepository;
         Current = Parent.Parent.Parent.AttachToVirtualRoot( OriginPath );
 
+        MarkdownDocument = Markdown.Parse( markdownText, MdContext.Pipeline );
         MarkdownBoundLinks = MarkdownDocument
                              .Descendants()
                              .OfType<LinkInline>()
@@ -87,8 +87,7 @@ internal class MdDocument
         Debug.Assert( path.IsRooted, "path.IsRooted" );
 
         var text = File.ReadAllText( path );
-        var md = Markdown.Parse( text );
-        return new MdDocument( md, path, mdRepository );
+        return new MdDocument( text, path, mdRepository );
     }
 
     /// <summary>

@@ -31,14 +31,11 @@ internal class MdDocumentTests : TestBase
 
 hello [link](linkToSomething).
 ";
-        var md = Markdown.Parse( text );
-
-        // var mdRepository = SingleRepositoryContext.Stacks.First().Value.Repositories.First().Value;
         var mdRepository = DummyRepository;
 
         var sut = new MdDocument
         (
-            md,
+            text,
             InFolder.Combine( "SimpleStack/FooBarFakeRepo1/VirtualPath.md" ),
             mdRepository
         );
@@ -119,10 +116,8 @@ hello [link](linkToSomething).
         var text = @"
 [click](../ServiceContainer/SimpleServiceContainer.cs)
 ";
-        var md = Markdown.Parse( text );
-
         var virtualFile = $"{DummyRepository.RootPath}/CK.Core/AutomaticDI/README.md";
-        var sut = new MdDocument( md, virtualFile, DummyRepository );
+        var sut = new MdDocument( text, virtualFile, DummyRepository );
 
         var expected = new NormalizedPath
         (

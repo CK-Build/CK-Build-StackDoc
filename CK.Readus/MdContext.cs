@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using CK.Core;
+using Markdig;
 
 namespace CK.Readus;
 
@@ -9,6 +10,10 @@ namespace CK.Readus;
 [DebuggerDisplay( "{Stacks.Count} stacks" )]
 public class MdContext
 {
+    internal static MarkdownPipeline Pipeline => new MarkdownPipelineBuilder()
+                                                 .UsePipeTables()
+                                                 .Build();
+
     internal NormalizedPath VirtualRoot { get; private set; }
 
     /// <summary>

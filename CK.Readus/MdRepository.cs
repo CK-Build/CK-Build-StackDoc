@@ -64,7 +64,7 @@ internal class MdRepository
 
         foreach( var (_, mdDocument) in DocumentationFiles )
         {
-            var html = mdDocument.MarkdownDocument.ToHtml();
+            var html = mdDocument.MarkdownDocument.ToHtml(MdContext.Pipeline);
             var path = ResolvePath( mdDocument.Current );
 
             Directory.CreateDirectory( path.RemoveLastPart() );
