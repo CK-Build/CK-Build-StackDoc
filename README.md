@@ -10,7 +10,7 @@ Implement :
 - 🗑️Transformers idempotent => Tests several runs of the same one, then all in different orders
 - Support github branches link
 - Copy internal targeted files (img and cs code)
-- Check url availability
+- ✔️Check url availability
 - ✔️A link to a directory should look for a README.md (or index)
 - ✔️Handle file extension transformation in the right component
 - ✔️Resolve dots at some point

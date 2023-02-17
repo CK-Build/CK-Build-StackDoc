@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Text;
 using CK.Core;
 using Markdig;
@@ -13,6 +12,7 @@ namespace CK.Readus;
 public class MdContext
 {
     internal LinkChecker LinkChecker { get; }
+
     internal static MarkdownPipeline Pipeline => new MarkdownPipelineBuilder()
                                                  .UsePipeTables()
                                                  .UseGenericAttributes()
@@ -72,28 +72,38 @@ public class MdContext
     internal bool IsOk { get; private set; }
     internal bool IsError => !IsOk;
 
+    public MdContextConfiguration Configuration { get; }
+
     public MdContext
     (
-        IEnumerable<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)> stacks
-    ) : this()
+        IEnumerable<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)> stacks,
+        MdContextConfiguration? configuration = null
+    ) : this( configuration )
     {
         var task = InitAsync( stacks.ToArray() ).ConfigureAwait( false );
         task.GetAwaiter().GetResult();
     }
 
-    public MdContext( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
+    public MdContext
+    (
+        string stackName,
+        IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories,
+        MdContextConfiguration? configuration = null
+    )
     : this
     (
         new (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)[]
         {
             new( stackName, repositories ),
-        }
+        },
+        configuration
     ) { }
 
-    private MdContext()
+    private MdContext( MdContextConfiguration? configuration )
     {
         Stacks = new Dictionary<string, MdStack>();
         LinkChecker = new LinkChecker();
+        Configuration = configuration ?? MdContextConfiguration.DefaultConfiguration();
     }
 
     private async Task InitAsync
@@ -248,6 +258,9 @@ public class MdContext
 
     private Func<IActivityMonitor, NormalizedPath, Task>[] GetAsyncChecks( MdDocument mdDocument )
     {
+        if( !Configuration.EnableLinkAvailabilityCheck )
+            return Array.Empty<Func<IActivityMonitor, NormalizedPath, Task>>();
+
         var onlineCheck = LinkChecker.CheckLinkAvailabilityAsync;
         var checks = new[] { onlineCheck };
         return checks;
@@ -316,5 +329,4 @@ public class MdContext
 
         return builder.ToString();
     }
-
 }
