@@ -94,7 +94,7 @@ internal class MdDocument
     ///
     /// </summary>
     /// <param name="monitor"></param>
-    /// <param name="check">Takes a rooted path</param>
+    /// <param name="check"></param>
     public void CheckLinks
     (
         IActivityMonitor monitor,
@@ -103,13 +103,28 @@ internal class MdDocument
     {
         foreach( var link in MarkdownBoundLinks )
         {
-            // monitor.Info( $"Check '{link.OriginPath}'" );
             if( link.OriginPath.IsEmptyPath ) monitor.Info( "Is empty link" );
 
             check( monitor, link.RootedPath );
-            //TODO: Here we may want to expose the LinkInline as it contains information about the link.
-            // For example, we may need the text related to this link.
-            // It also contains info like IsImage.
+        }
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="monitor"></param>
+    /// <param name="check"></param>
+    public async Task CheckLinksAsync
+    (
+        IActivityMonitor monitor,
+        Func<IActivityMonitor, NormalizedPath, Task> check
+    )
+    {
+        foreach( var link in MarkdownBoundLinks )
+        {
+            if( link.OriginPath.IsEmptyPath ) monitor.Info( "Is empty link" );
+
+            await check( monitor, link.RootedPath );
         }
     }
 
@@ -180,9 +195,13 @@ internal class MdDocument
         {
             potentialMatchDotResolved = potentialMatch.ResolveDots();
         }
-        catch( InvalidOperationException e)
+        catch( InvalidOperationException e )
         {
-            monitor.Fatal( $"Invalid link: `{link}`(virtual representation) in document: `{OriginPath}`. Are you missing a target ?", e);
+            monitor.Fatal
+            (
+                $"Invalid link: `{link}`(virtual representation) in document: `{OriginPath}`. Are you missing a target ?",
+                e
+            );
             throw;
         }
 

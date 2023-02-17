@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Text;
 using CK.Core;
 using Markdig;
@@ -11,6 +12,7 @@ namespace CK.Readus;
 [DebuggerDisplay( "{Stacks.Count} stacks" )]
 public class MdContext
 {
+    internal LinkChecker LinkChecker { get; }
     internal static MarkdownPipeline Pipeline => new MarkdownPipelineBuilder()
                                                  .UsePipeTables()
                                                  .UseGenericAttributes()
@@ -75,9 +77,8 @@ public class MdContext
         IEnumerable<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)> stacks
     ) : this()
     {
-        Init( stacks.ToArray() );
-        // Parameters could be stacks at least. Or a list of repositories from where we create stacks.
-        // Probably here needs to run all the things to make it ready to report or act.
+        var task = InitAsync( stacks.ToArray() ).ConfigureAwait( false );
+        task.GetAwaiter().GetResult();
     }
 
     public MdContext( string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )
@@ -92,12 +93,10 @@ public class MdContext
     private MdContext()
     {
         Stacks = new Dictionary<string, MdStack>();
-
-        // _transformers = new List<Func<IActivityMonitor, NormalizedPath, NormalizedPath>>();
-        // _checkers = new List<Action<IActivityMonitor, NormalizedPath>>();
+        LinkChecker = new LinkChecker();
     }
 
-    private void Init
+    private async Task InitAsync
     (
         (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)[] stacks
     )
@@ -129,7 +128,7 @@ public class MdContext
 
         foreach( var (name, mdStack) in Stacks )
         {
-            var processingOk = EnsureProcessing( monitor, mdStack );
+            var processingOk = await EnsureProcessingAsync( monitor, mdStack );
             IsOk = IsOk && processingOk;
         }
 
@@ -147,16 +146,16 @@ public class MdContext
         OutputPath = outputPath;
     }
 
-    public void WriteHtml( IActivityMonitor monitor, NormalizedPath outputPath )
+    public async Task WriteHtmlAsync( IActivityMonitor monitor, NormalizedPath outputPath )
     {
         SetOutputPath( outputPath );
-        WriteHtml( monitor );
+        await WriteHtmlAsync( monitor );
     }
 
-    public void WriteHtml( IActivityMonitor monitor )
+    public async Task WriteHtmlAsync( IActivityMonitor monitor )
     {
         Throw.CheckArgument( OutputPath.HasParts );
-        var postProcessingResult = EnsurePostProcessing( monitor );
+        var postProcessingResult = await EnsurePostProcessingAsync( monitor );
         if( postProcessingResult is false )
         {
             monitor.Error( "Post processing failed" );
@@ -166,7 +165,7 @@ public class MdContext
         Apply( monitor );
     }
 
-    private bool EnsureProcessing( IActivityMonitor monitor, MdStack mdStack )
+    private async Task<bool> EnsureProcessingAsync( IActivityMonitor monitor, MdStack mdStack )
     {
         var isOk = true;
 
@@ -174,11 +173,12 @@ public class MdContext
         foreach( var (path, mdRepository) in mdStack.Repositories )
         {
             var mdDocuments = mdRepository.DocumentationFiles.Values.ToArray();
-            var processingResult = processor.Process
+            var processingResult = await processor.ProcessAsync
             (
                 monitor,
                 mdDocuments,
                 GetChecks,
+                GetAsyncChecks,
                 GetTransforms
             );
             isOk = isOk && processingResult;
@@ -189,11 +189,12 @@ public class MdContext
         // If any error is raised, return false.
     }
 
-    private bool EnsurePostProcessing( IActivityMonitor monitor )
+    private async Task<bool> EnsurePostProcessingAsync( IActivityMonitor monitor )
     {
         var processor = new LinkProcessor();
 
-        var processingResult = processor.Process( monitor, AllDocuments, default, GetPostProcessTransforms );
+        var processingResult = await processor.ProcessAsync
+        ( monitor, AllDocuments, default, default, GetPostProcessTransforms );
 
         foreach( var mdDocument in AllDocuments )
         {
@@ -242,6 +243,13 @@ public class MdContext
 
         var checks = new[] { repoCheck, stackCheck };
 
+        return checks;
+    }
+
+    private Func<IActivityMonitor, NormalizedPath, Task>[] GetAsyncChecks( MdDocument mdDocument )
+    {
+        var onlineCheck = LinkChecker.CheckLinkAvailabilityAsync;
+        var checks = new[] { onlineCheck };
         return checks;
     }
 
@@ -308,4 +316,5 @@ public class MdContext
 
         return builder.ToString();
     }
+
 }

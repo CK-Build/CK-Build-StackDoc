@@ -6,46 +6,79 @@ internal class LinkProcessor
 {
     public LinkProcessor() { }
 
-    public bool Process
+    public async Task<bool> ProcessAsync
     (
         IActivityMonitor monitor,
         MdDocument[] mdDocuments,
         Func<MdDocument, Action<IActivityMonitor, NormalizedPath>[]>? getChecks,
+        Func<MdDocument, Func<IActivityMonitor, NormalizedPath, Task>[]>? getAsyncChecks,
         Func<MdDocument, Func<IActivityMonitor, NormalizedPath, NormalizedPath>[]> getTransforms
     )
     {
         var isOk = true;
 
-        foreach( var mdDocument in mdDocuments )
+        // await Task.WhenAll
+        // (
+        //     mdDocuments.Select<MdDocument, Task>
+        //     (
+        //         async mdDocument => { await ProcessDocumentAsync( monitor, mdDocument ); }
+        //     )
+        // );
+
+        foreach ( var mdDocument in mdDocuments )
+        {
+            await ProcessDocumentAsync( monitor, mdDocument );
+        }
+
+        async Task ProcessDocumentAsync( IActivityMonitor m, MdDocument mdDocument )
         {
             var checks = getChecks?.Invoke( mdDocument );
+            var asyncChecks = getAsyncChecks?.Invoke( mdDocument );
             var transforms = getTransforms( mdDocument );
 
 
-            using var documentInfo = monitor
+            using var documentInfo = m
                                      .OpenInfo( $"Processing '{mdDocument.OriginPath}'" )
                                      .ConcludeWith( () => $"Processed '{mdDocument.DocumentName}'" );
 
 
-            if( checks != null )
-                foreach( var check in checks )
+            if ( checks != null )
+                foreach ( var check in checks )
                 {
-                    using var checkInfo = monitor
+                    using var checkInfo = m
                                           .OpenInfo
                                           ( $"Checking '{mdDocument.DocumentName}' with '{check.Method.Name}'" )
                                           .ConcludeWith( () => $"Checked '{mdDocument.DocumentName}'" );
 
-                    mdDocument.CheckLinks( monitor, check );
+                    mdDocument.CheckLinks( m, check );
                 }
 
-            foreach( var transform in transforms )
+            if ( asyncChecks != null )
+                foreach ( var check in asyncChecks )
+                {
+                    using var checkInfo = m
+                                          .OpenInfo
+                                          (
+                                              $"Checking '{mdDocument.DocumentName}' with '{check.Method.Name}'"
+                                          )
+                                          .ConcludeWith( () => $"Checked '{mdDocument.DocumentName}'" );
+
+                    await mdDocument.CheckLinksAsync( m, check );
+                }
+
+
+            foreach ( var transform in transforms )
             {
                 string DisplaysError() => mdDocument.IsError ? " with error" : string.Empty;
-                using var transformInfo = monitor
-                                          .OpenInfo( $"Transforming '{mdDocument.DocumentName}' with '{transform.Method.Name}'" )
-                                          .ConcludeWith( () => $"Transformed '{mdDocument.DocumentName}'{DisplaysError()}" );
+                using var transformInfo = m
+                                          .OpenInfo
+                                          (
+                                              $"Transforming '{mdDocument.DocumentName}' with '{transform.Method.Name}'"
+                                          )
+                                          .ConcludeWith
+                                          ( () => $"Transformed '{mdDocument.DocumentName}'{DisplaysError()}" );
 
-                mdDocument.TransformLinks( monitor, transform );
+                mdDocument.TransformLinks( m, transform );
             }
 
             isOk = isOk && mdDocument.IsOk;

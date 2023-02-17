@@ -3,26 +3,26 @@
 internal class MdContextTests : TestBase
 {
     [Test]
-    public void WriteHtml_simple_stack_should_ensure_calls_to_all_checks_and_transforms()
+    public async Task WriteHtml_simple_stack_should_ensure_calls_to_all_checks_and_transformsAsync()
     {
         var context = SimpleContext;
 
-        context.WriteHtml( Monitor );
+        await context.WriteHtmlAsync( Monitor );
     }
 
     [Test]
-    public void WriteHtml_simple_stack_with_cross_ref_should_ensure_calls_to_all_checks_and_transforms()
+    public async Task WriteHtml_simple_stack_with_cross_ref_should_ensure_calls_to_all_checks_and_transformsAsync()
     {
         var context = CrossRefContext;
 
-        context.WriteHtml( Monitor );
+        await context.WriteHtmlAsync( Monitor );
     }
     [Test]
-    public void WriteHtml_multi_stack_with_cross_stack_ref_should_ensure_calls_to_all_checks_and_transforms()
+    public async Task WriteHtml_multi_stack_with_cross_stack_ref_should_ensure_calls_to_all_checks_and_transformsAsync()
     {
         var context = MultiStackWithCrossRefContext;
 
-        context.WriteHtml( Monitor );
+        await context.WriteHtmlAsync( Monitor );
     }
 
     [Test]

@@ -7,9 +7,11 @@ using CK.Readus;
 
 public static class Program
 {
-    public static void Main( string[] args )
+    public static async Task Main( string[] args )
     {
-        var grandOutputConfiguration = new GrandOutputConfiguration().AddHandler( new ConsoleConfiguration() );
+        var grandOutputConfiguration = new GrandOutputConfiguration()
+        // { MinimalFilter = LogFilter.Release }
+        .AddHandler( new ConsoleConfiguration() );
         GrandOutput.EnsureActiveDefault( grandOutputConfiguration );
 
         var monitor = new ActivityMonitor();
@@ -106,6 +108,6 @@ public static class Program
         var context = new MdContext( "CK", repositories );
 
         context.SetOutputPath( outputFolder );
-        context.WriteHtml( monitor );
+        await context.WriteHtmlAsync( monitor );
     }
 }
