@@ -1,7 +1,4 @@
-﻿using Markdig.Syntax;
-using Markdig.Syntax.Inlines;
-
-namespace CK.Readus.Tests;
+﻿namespace CK.Readus.Tests;
 
 internal class MdRepositoryTests : TestBase
 {

@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using CK.Core;
-using Markdig;
-using Markdig.Syntax;
 
 namespace CK.Readus;
 
@@ -52,22 +50,6 @@ internal class MdStack
         }
 
         return mdStack;
-    }
-
-    public MarkdownDocument GenerateToc( IActivityMonitor monitor )
-    {
-        var builder = new StringBuilder();
-        builder.AppendLine( $"- {StackName}" );
-        builder.AppendLine();
-
-        foreach( var (name, mdRepository) in Repositories )
-        {
-            var found = mdRepository.TryGetReadme( out var readme );
-            if( found )
-                builder.AppendLine( $"  - [{name}]({readme})" ).AppendLine();
-        }
-
-        return Markdown.Parse( builder.ToString(), MdContext.Pipeline );
     }
 
     public void Generate( IActivityMonitor monitor, NormalizedPath outputPath )

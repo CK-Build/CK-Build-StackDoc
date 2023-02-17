@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using CK.Core;
 using Markdig;
 
@@ -12,6 +13,7 @@ public class MdContext
 {
     internal static MarkdownPipeline Pipeline => new MarkdownPipelineBuilder()
                                                  .UsePipeTables()
+                                                 .UseGenericAttributes()
                                                  .Build();
 
     internal NormalizedPath VirtualRoot { get; private set; }
@@ -187,7 +189,7 @@ public class MdContext
         // If any error is raised, return false.
     }
 
-    private bool EnsurePostProcessing( IActivityMonitor monitor)
+    private bool EnsurePostProcessing( IActivityMonitor monitor )
     {
         var processor = new LinkProcessor();
 
@@ -215,20 +217,19 @@ public class MdContext
             mdDocument.Apply( monitor );
         }
 
+        // Html
         foreach( var (name, mdStack) in Stacks )
         {
             mdStack.Generate( monitor, OutputPath );
         }
 
         // Generate ToC
-        var html = "";
-        foreach( var (_, mdStack) in Stacks )
-        {
-            var toc = mdStack.GenerateToc( monitor );
-            html += toc.ToHtml( Pipeline );
-        }
+        var html = GenerateHtmlToc( monitor );
 
         File.WriteAllText( OutputPath.AppendPart( "ToC.html" ), html );
+
+        // Css
+        HtmlWriter.WriteCss( this );
     }
 
     private Action<IActivityMonitor, NormalizedPath>[] GetChecks( MdDocument mdDocument )
@@ -277,8 +278,34 @@ public class MdContext
         return transforms;
     }
 
-    // ResolveLinks() // Apply all transformations
 
-    // path ? to output.
-    // Output type, like tree, one directory etc.
+    internal string GenerateHtmlToc( IActivityMonitor monitor, MdDocument? mdDocument = default )
+    {
+        var builder = new StringBuilder();
+        foreach( var (_, mdStack) in Stacks )
+        {
+            builder.AppendLine( @$"<a class=""pure-menu-heading"" href="""">{mdStack.StackName}</a>" );
+            builder.AppendLine( @$"<ul class=""pure-menu-list"">" );
+
+            foreach( var (name, mdRepository) in mdStack.Repositories )
+            {
+                var hasReadme = mdRepository.TryGetReadme( out var readme );
+                if( !hasReadme ) continue;
+
+                if( mdDocument is not null ) // else, build from this.
+                    readme = mdDocument.VirtualLocation.CreateRelative( readme );
+
+                var menuSelected = string.Empty;
+                if( readme.Equals( "README.html" ) ) menuSelected = " menu-item-divided pure-menu-selected";
+                builder.AppendLine
+                (
+                    $@"<li class=""pure-menu-item{menuSelected}""><a href=""{readme}"" class=""pure-menu-link"">{name}</a></li>"
+                );
+            }
+
+            builder.AppendLine( @$"</ul>" );
+        }
+
+        return builder.ToString();
+    }
 }

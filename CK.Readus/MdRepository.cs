@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using CK.Core;
-using Markdig;
 
 namespace CK.Readus;
 
@@ -79,10 +78,8 @@ internal class MdRepository
 
         foreach( var (_, mdDocument) in DocumentationFiles )
         {
-            var html = mdDocument.MarkdownDocument.ToHtml( MdContext.Pipeline );
-
-            Directory.CreateDirectory( mdDocument.Current.RemoveLastPart() );
-            File.WriteAllText( mdDocument.Current, html );
+            var toc = Parent.Parent.GenerateHtmlToc( monitor, mdDocument );
+            HtmlWriter.WriteHtml( mdDocument, toc );
         }
     }
 
