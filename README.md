@@ -6,7 +6,7 @@ Implement :
 
 - ✔️Handle virtual root ~
 - ✔️Generate ToC
-- Generate ToC relative to each page
+- ✔️Generate ToC relative to each page
 - 🗑️Transformers idempotent => Tests several runs of the same one, then all in different orders
 - Support github branches link
 - Copy internal targeted files (img and cs code)
@@ -14,11 +14,11 @@ Implement :
 - ✔️A link to a directory should look for a README.md (or index)
 - ✔️Handle file extension transformation in the right component
 - ✔️Resolve dots at some point
-- Simple CSS
+- ✔️Simple CSS
 - Support anchors links as foobar.md#anchor
 
 Bugs :
-- Table is broken
+- ✔️Table is broken
 - html links cannot be parsed as markdown links
 
 Test :
