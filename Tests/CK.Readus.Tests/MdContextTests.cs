@@ -34,4 +34,30 @@ internal class MdContextTests : TestBase
         SingleRepositoryContext.VirtualRoot.Should().Be( InFolder.AppendPart( "SimpleStack" ).AppendPart( "FooBarFakeRepo1" ) );
         CrossRefContext.VirtualRoot.Should().Be( InFolder.AppendPart( "SimpleStackWithCrossRef" ) );
     }
+
+    [Test]
+    public void AttachToVirtualRoot_should_attach_single_repository_context()
+    {
+        var context = SingleRepositoryContext;
+        var stack = context.Stacks.First().Value;
+        var repository = stack.Repositories.First().Value;
+
+        var virtualPath = context.AttachToVirtualRoot( repository.RootPath );
+
+        virtualPath.Should().Be( "~" );
+    }
+
+    [Test]
+    public void AttachToVirtualRoot_should_attach_multi_repository_context()
+    {
+        var context = SimpleContext;
+        var stack = context.Stacks.First().Value;
+        var repository = stack.Repositories.First().Value;
+
+        var virtualPath = context.AttachToVirtualRoot( repository.RootPath );
+
+        var expected = new NormalizedPath( "~" ).AppendPart( repository.RepositoryName );
+
+        virtualPath.Should().Be( expected );
+    }
 }

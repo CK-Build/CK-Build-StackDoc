@@ -33,7 +33,7 @@ public class MdContext
         // if the path is an url that won't work too
         // actually that smells shit
 
-        if( path.StartsWith( VirtualRoot ) is false )
+        if( path.StartsWith( VirtualRoot, false ) is false )
             throw new InvalidOperationException
             (
                 $"Either this method should not have been called or there is a bug in VirtualRoot computing."
