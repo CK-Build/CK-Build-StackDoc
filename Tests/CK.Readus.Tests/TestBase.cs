@@ -7,10 +7,10 @@ namespace CK.Readus.Tests;
 
 internal class TestBase
 {
-    public IActivityMonitor Monitor => TestHelper.Monitor;
-    public NormalizedPath ProjectFolder => TestHelper.TestProjectFolder;
-    public NormalizedPath InFolder => ProjectFolder.AppendPart( "In" );
-    public NormalizedPath OutFolder => ProjectFolder.AppendPart( "Out" );
+    public static IActivityMonitor Monitor => TestHelper.Monitor;
+    public static NormalizedPath ProjectFolder => TestHelper.TestProjectFolder;
+    public static NormalizedPath InFolder => ProjectFolder.AppendPart( "In" );
+    public static NormalizedPath OutFolder => ProjectFolder.AppendPart( "Out" );
 
     public TestBase()
     {

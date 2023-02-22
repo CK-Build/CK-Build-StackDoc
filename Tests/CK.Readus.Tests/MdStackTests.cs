@@ -1,4 +1,6 @@
-﻿namespace CK.Readus.Tests;
+﻿using System.Collections;
+
+namespace CK.Readus.Tests;
 
 internal class MdStackTests : TestBase
 {
@@ -283,17 +285,35 @@ internal class MdStackTests : TestBase
         sut.Should().Be( expected );
     }
 
-    // @formatter:off
+    public static IEnumerable TransformCrossRepositoryUrlShouldBeIdempotentData
+    {
+        get
+        {
+            yield return new TestCaseData( "README.md", "README.md" );
+            yield return new TestCaseData( "", "" );
+            yield return new TestCaseData( ".", "." );
+            yield return new TestCaseData( "A/README.md", "A/README.md" );
+            yield return new TestCaseData( "../README.md", "../README.md" );
+            yield return new TestCaseData
+            (
+                "https://github.com/Invenietis/FooBarFakeRepo2/README.md",
+                "~/FooBarFakeRepo2/README.md"
+            );
+            yield return new TestCaseData
+            (
+                "https://github.com/Invenietis/UnknownRepo/README.md",
+                "https://github.com/Invenietis/UnknownRepo/README.md"
+            );
+            yield return new TestCaseData
+            (
+                InFolder.Combine( @"SimpleStackWithCrossRef\FooBarFakeRepo1\README.md" ).Path,
+                @"~/FooBarFakeRepo1\README.md"
+            );
+        }
+    }
+
     [Test]
-    [TestCase( "README.md", "README.md" )]
-    [TestCase( "", "" )]
-    [TestCase( ".", "." )]
-    [TestCase( "A/README.md", "A/README.md" )]
-    [TestCase( "../README.md", "../README.md" )]
-    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo2/README.md", "~/FooBarFakeRepo2/README.md" )]
-    [TestCase( "https://github.com/Invenietis/UnknownRepo/README.md", "https://github.com/Invenietis/UnknownRepo/README.md" )]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStackWithCrossRef\FooBarFakeRepo1\README.md", @"~/FooBarFakeRepo1\README.md" )] //TODO: use TestProjectFolder
-    // @formatter:on
+    [TestCaseSource( nameof( TransformCrossRepositoryUrlShouldBeIdempotentData ) )]
     public void TransformCrossRepositoryUrl_should_be_idempotent( string link, string expected )
     {
         var stack = CrossRefContext.Stacks.First().Value;
@@ -301,6 +321,16 @@ internal class MdStackTests : TestBase
         var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
         sut.Should().Be( expected );
         sut = stack.TransformCrossRepositoryUrl( Monitor, sut );
+        sut.Should().Be( expected );
+    }
+
+    [Test]
+    [TestCase("https://github.com/Invenietis/FooBarFakeRepo1/tree/master/Project/README.md", "~/FooBarFakeRepo1/Project/README.md")]
+    public void TransformCrossRepositoryUrl_should_handle_github_branches( string link, string expected )
+    {
+        var stack = GitContext.Stacks.First().Value;
+
+        var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
         sut.Should().Be( expected );
     }
 }

@@ -1,4 +1,5 @@
-﻿using Markdig.Syntax;
+﻿using System.Collections;
+using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
 namespace CK.Readus.Tests;
@@ -137,16 +138,22 @@ hello [link](linkToSomething).
         sut.MarkdownDocument.Descendants().OfType<LinkInline>().Single().Url.Should().Be( expected );
     }
 
-     // @formatter:off
+    public static IEnumerable TargetAFile
+    {
+        get
+        {
+            yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\Project\README.md" ) );
+            yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\Project\Code.cs" ) );
+            yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\Project\SomeDocumentation.md" ) );
+            yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\someFile" ) );
+            yield return new TestCaseData( new NormalizedPath(@"~/./Project/Code.cs" ) );
+            yield return new TestCaseData( new NormalizedPath(@"~/./Project/README.md)" ) );
+        }
+    }
+
     [Test]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\README.md" )]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\Code.cs" )]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project\SomeDocumentation.md" )]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\someFile" )]
-    [TestCase( @"~/./Project/Code.cs" )]
-    [TestCase( @"~/./Project/README.md" )]
-    // @formatter:on
-    public void TransformTargetDirectory_should_return_same_link_when_target_a_file( string link )
+    [TestCaseSource( nameof( TargetAFile ) )]
+    public void TransformTargetDirectory_should_return_same_link_when_target_a_file( NormalizedPath link )
     {
         var document = DummyDocument;
         TransformAndAssert( link, document, link );
@@ -164,19 +171,38 @@ hello [link](linkToSomething).
         TransformAndAssert( link, document, expected );
     }
 
+    public static IEnumerable DirectoryThatDoesNotContainsAReadme
+    {
+        get
+        {
+            yield return new TestCaseData
+            (
+                InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\AnotherProject" )
+            );
+        }
+    }
+
     [Test]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\AnotherProject" )]
+    [TestCaseSource( nameof( DirectoryThatDoesNotContainsAReadme ) )]
     public void TransformTargetDirectory_should_return_same_link_when_target_a_directory_that_does_not_contains_a_readme
-    ( string link )
+    ( NormalizedPath link )
     {
         TransformAndAssert( link, DummyDocument, link );
     }
 
+    public static IEnumerable TargetOutOfScope
+    {
+        get
+        {
+            yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\Project" ) );
+            yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\" ) );
+            yield return new TestCaseData( new NormalizedPath( @"https://github.com/Invenietis/FooBarFakeRepo2" ) );
+        }
+    }
+
     [Test]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\Project" )]
-    [TestCase( @"C:\Dev\Signature\CK.Readus\Tests\CK.Readus.Tests\In\SimpleStack\FooBarFakeRepo1\" )]
-    [TestCase( @"https://github.com/Invenietis/FooBarFakeRepo2" )]
-    public void TransformTargetDirectory_should_return_same_link_when_target_out_of_scope( string link )
+    [TestCaseSource( nameof( TargetOutOfScope ) )]
+    public void TransformTargetDirectory_should_return_same_link_when_target_out_of_scope( NormalizedPath link )
     {
         TransformAndAssert( link, DummyDocument, link );
     }
