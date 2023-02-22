@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="CK.ActivityMonitor.SimpleSender" Version="17.0.1" />
       <PackageReference Include="CK.Core" Version="16.1.1" />
+      <PackageReference Include="LibGit2Sharp" Version="0.26.2" />
       <PackageReference Include="Markdig.Signed" Version="0.30.4" />
     </ItemGroup>
 

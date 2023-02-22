@@ -325,7 +325,11 @@ internal class MdStackTests : TestBase
     }
 
     [Test]
-    [TestCase("https://github.com/Invenietis/FooBarFakeRepo1/tree/master/Project/README.md", "~/FooBarFakeRepo1/Project/README.md")]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/blob/master/Project/README.md", "~/Project/README.md" )]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/tree/master/Project", "~/Project" )]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/blob/develop/Project/README.md", "https://github.com/Invenietis/FooBarFakeRepo1/blob/develop/Project/README.md" )]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/README.md", "~/README.md" )]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo2/blob/master/Project/README.md", "https://github.com/Invenietis/FooBarFakeRepo2/blob/master/Project/README.md" )]
     public void TransformCrossRepositoryUrl_should_handle_github_branches( string link, string expected )
     {
         var stack = GitContext.Stacks.First().Value;

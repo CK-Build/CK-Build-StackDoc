@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using CK.Core;
+using LibGit2Sharp;
 
 namespace CK.Readus;
 
@@ -22,19 +23,34 @@ internal class MdRepositoryReader
         {
             var repositoryName = rootPath.LastPart;
             var filesPaths = Directory.GetFiles
-            (
-                rootPath.Path,
-                "*.md",
-                new EnumerationOptions { RecurseSubdirectories = true }
-            )
-            .Select( f => new NormalizedPath( f ) )
-            .ToArray();
+                                      (
+                                          rootPath.Path,
+                                          "*.md",
+                                          new EnumerationOptions { RecurseSubdirectories = true }
+                                      )
+                                      .Select( f => new NormalizedPath( f ) )
+                                      .ToArray();
 
             //TODO: what about built things. Like under node_modules.
 
             var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
 
-            var mdRepository = new MdRepository( repositoryName, remoteUrl, rootPath, documentationFiles, mdStack );
+            string? gitBranch = null;
+            if( mdStack.Parent.Configuration.EnableGitSupport )
+            {
+                using var gitRepository = new Repository( rootPath );
+                gitBranch = gitRepository.Head.FriendlyName;
+            }
+
+            var mdRepository = new MdRepository
+            (
+                repositoryName,
+                remoteUrl,
+                rootPath,
+                documentationFiles,
+                mdStack,
+                gitBranch
+            );
 
             foreach( var file in filesPaths )
             {
@@ -43,9 +59,12 @@ internal class MdRepositoryReader
                 documentationFiles.Add( file, MdDocument.Load( file, mdRepository ) );
             }
 
-            monitor.Info( $"Repository '{repositoryName}' contains a total of "
-                        + $"{documentationFiles.Values.Select( v => v.MarkdownBoundLinks.Count ).Sum()} links"
-                        + $" within {filesPaths.Length} md files.");
+            monitor.Info
+            (
+                $"Repository '{repositoryName}' contains a total of "
+              + $"{documentationFiles.Values.Select( v => v.MarkdownBoundLinks.Count ).Sum()} links"
+              + $" within {filesPaths.Length} md files."
+            );
 
             return mdRepository;
         }

@@ -41,7 +41,8 @@ internal class TestBase
         foreach( var (repositoryName, mdRepository) in mdStack.Repositories )
         {
             var documentationFilesCount = mdRepository.DocumentationFiles.Count;
-            Add( $"Repository {repositoryName} contains {documentationFilesCount} md files" );
+            var url = mdRepository.RemoteUrl;
+            Add( $"Repository {repositoryName} at `{url}` contains {documentationFilesCount} md files" );
             IndentUp();
 
             foreach( var (fullPath, mdDocument) in mdRepository.DocumentationFiles )
@@ -124,6 +125,12 @@ internal class TestBase
     /// 1 Repository.
     /// </summary>
     public MdContext SingleRepositoryContext { get; private set; }
+
+    /// <summary>
+    /// 1 SimpleStack.
+    /// 1 Repository => git with master develop testBranch.
+    /// </summary>
+    public MdContext GitContext { get; private set; }
 
     /// <summary>
     /// 1 Repository within a context that contains a single stack with this single repository.
@@ -243,6 +250,23 @@ internal class TestBase
                 ),
             }
         );
+
+        GitContext = CreateContext
+        (
+            nameof( GitContext ),
+            new[]
+            {
+                new ValueTuple<string, IEnumerable<(string local, string remote)>>
+                (
+                    "SimpleStackWithTrueGit",
+                    new[]
+                    {
+                        ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                    }
+                ),
+            },
+            new MdContextConfiguration() { EnableLinkAvailabilityCheck = false, EnableGitSupport = true }
+        );
     }
 
     private void GenerateRepositories()
@@ -300,8 +324,26 @@ internal class TestBase
         }
     }
 
+    private readonly List<NormalizedPath> _gitFolders = new();
+
+    [OneTimeTearDown]
+    public void TearDown()
+    {
+        foreach( var gitFolder in _gitFolders )
+        {
+            var lastPart = gitFolder.LastPart;
+            lastPart.Should().Be( ".git" );
+            var gitFolderOff = gitFolder.RemoveLastPart().AppendPart( ".gitOFF" );
+            Directory.Move( gitFolder, gitFolderOff );
+        }
+    }
+
     private MdContext CreateContext
-    ( string contextName, (string stackName, IEnumerable<(string local, string remote)> repositories )[] stacks )
+    (
+        string contextName,
+        (string stackName, IEnumerable<(string local, string remote)> repositories )[] stacks,
+        MdContextConfiguration configuration = null
+    )
     {
         var stacksInfo =
         new List<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )>
@@ -323,16 +365,37 @@ internal class TestBase
             stacksInfo.Add( (stackName, repositoriesInfo) );
         }
 
-        return CreateContext( contextName, stacksInfo.ToArray() );
+        return CreateContext( contextName, stacksInfo.ToArray(), configuration );
     }
 
     private MdContext CreateContext
     (
         string contextName,
-        (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )[] stacks
+        (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories )[] stacks,
+        MdContextConfiguration configuration = null
     )
     {
-        var mdContext = new MdContext( stacks );
+        if( configuration is { EnableGitSupport: true } )
+            foreach( var (local, _) in stacks.SelectMany( s => s.repositories ) )
+            {
+                // Make the git folder usable for this run.
+                // It will be reverted in the tear down.
+                var gitFolderOff = local.AppendPart( ".gitOFF" );
+                var gitFolderOn = local.AppendPart( ".git" );
+                _gitFolders.Add( gitFolderOn );
+                if( Directory.Exists( gitFolderOff ) )
+                    Directory.Move( gitFolderOff, gitFolderOn );
+                else if( Directory.Exists( gitFolderOn ) )
+                    Monitor.Error
+                    (
+                        $"Inconsistency detected, `{gitFolderOn}` should end with `OFF`. "
+                      + $"It will be fixed in tear down."
+                    );
+                else
+                    Monitor.Fatal( $"Expected .git to exist here `{gitFolderOn}`." );
+            }
+
+        var mdContext = new MdContext( stacks, configuration );
 
         var outputPath = OutFolder.AppendPart( $"_{contextName}" );
         TestHelper.CleanupFolder( outputPath );

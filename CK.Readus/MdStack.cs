@@ -72,34 +72,76 @@ internal class MdStack
     public NormalizedPath TransformCrossRepositoryUrl( IActivityMonitor monitor, NormalizedPath link )
     {
         if( link.IsRelative() ) return link; // Should not happen
+        if // virtual ~ already
+        (
+            link.RootKind == NormalizedPathRootKind.RootedByFirstPart
+         && link.StartsWith( "~" )
+        )
+            return link;
 
         var isUri = link.RootKind == NormalizedPathRootKind.RootedByURIScheme;
-//TODO: rooted by first part with ~ can shortcut return link
-        return ResolveScope();
 
-        NormalizedPath ResolveScope()
+        var repositories = Parent.Stacks.Values.SelectMany( s => s.Repositories );
+
+        foreach( var (_, mdRepository) in repositories )
         {
-            var repositories = Parent.Stacks.Values.SelectMany( s => s.Repositories );
-            // We want repositories but it can be done at context level with all repo from all stacks.
-            foreach( var (_, mdRepository) in repositories )
+            var target = isUri ? mdRepository.RemoteUrl : mdRepository.RootPath;
+
+            Debug.Assert( target.IsEmptyPath is false, "target.IsEmptyPath is false" );
+            // Strict has to be false because by default when both path are equals it return false.
+            // This is not a behavior that I would except to be the default.
+            // I may want to have a way to return true when both are equal but not when other is empty.
+            var linkIsInScope = link.StartsWith( target, false );
+            if( linkIsInScope is false ) continue;
+
+            var linkRelativeToItsRepository = link.RemoveFirstPart( target.Parts.Count );
+
+            if( isUri )
             {
-                var target = isUri ? mdRepository.RemoteUrl : mdRepository.RootPath;
+                var uri = new Uri( link, UriKind.Absolute );
+                var host = uri.Host;
+                var branch = mdRepository.GitBranch;
 
-                Debug.Assert( target.IsEmptyPath is false, "target.IsEmptyPath is false" );
-                // Strict has to be false because by default when both path are equals it return false.
-                // This is not a behavior that I would except to be the default.
-                // I may want to have a way to return true when both are equal but not when other is empty.
-                var linkIsInScope = link.StartsWith( target, false );
-                if( linkIsInScope is false ) continue;
+                switch( host )
+                {
+                    // branches
+                    case "github.com" when linkRelativeToItsRepository.StartsWith( "tree" )
+                                        || linkRelativeToItsRepository.StartsWith( "blob" ):
+                        if( Parent.Configuration.EnableGitSupport is false ) return link;
 
-                var linkRelativeToItsRepository = link.RemoveFirstPart( target.Parts.Count );
+                        if( branch is null )
+                            throw new InvalidOperationException( "Cannot operate a Github link on a nonexistent git." );
+
+                        if( linkRelativeToItsRepository.RemoveFirstPart().StartsWith( branch ) ) // matched branch
+                            linkRelativeToItsRepository = linkRelativeToItsRepository.RemoveFirstPart( 2 );
+                        //TODO: support branches name like a/b that correspond to multiple parts.
+                        else
+                            return link;
+
+                        break;
+                    // If main page, can be linked by default
+                    case "github.com":
+                        // Default behavior
+                        break;
+                    case "gitlab.com":
+                        // TODO: gitlab support
+                        break;
+                    default:
+                        // default uri behavior
+                        break;
+                }
+
                 var virtualLink = mdRepository.VirtualRoot.Combine( linkRelativeToItsRepository );
-
                 return virtualLink;
             }
-
-            return link;
+            else
+            {
+                var virtualLink = mdRepository.VirtualRoot.Combine( linkRelativeToItsRepository );
+                return virtualLink;
+            }
         }
+
+        return link;
     }
 
     public void CheckStack( IActivityMonitor monitor, NormalizedPath link ) { }
