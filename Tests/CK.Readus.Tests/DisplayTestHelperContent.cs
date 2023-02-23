@@ -21,5 +21,9 @@ internal class DisplayTestHelperContent : TestBase
         Monitor.Info( GetContextContent( nameof( MultiStackContext ), MultiStackContext ) );
         Monitor.Info( Environment.NewLine );
         Monitor.Info( GetContextContent( nameof( MultiStackWithCrossRefContext ), MultiStackWithCrossRefContext ) );
+        Monitor.Info( Environment.NewLine );
+        Monitor.Info( GetContextContent( nameof( GitContext ), GitContext ) );
+        Monitor.Info( Environment.NewLine );
+        Monitor.Info( GetContextContent( nameof( AdvancedGitContext ), AdvancedGitContext ) );
     }
 }

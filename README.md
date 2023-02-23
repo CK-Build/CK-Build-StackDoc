@@ -9,7 +9,7 @@ Implement :
 - ✔️Generate ToC relative to each page
 - 🗑️Transformers idempotent => Tests several runs of the same one, then all in different orders
 - ✔️Support github branches link
-- Support gitlab
+- ✔️Support gitlab
 - ✔️Support Multi-parts branches
 - Copy internal targeted files (img and cs code)
 - ✔️Check url availability

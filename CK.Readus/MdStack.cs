@@ -107,26 +107,52 @@ internal class MdStack
                     // branches
                     case "github.com" when linkRelativeToItsRepository.StartsWith( "tree" )
                                         || linkRelativeToItsRepository.StartsWith( "blob" ):
+                    {
                         if( Parent.Configuration.EnableGitSupport is false ) return link;
 
                         if( branch is null )
                             throw new InvalidOperationException( "Cannot operate a Github link on a nonexistent git." );
 
-                        if( linkRelativeToItsRepository.RemoveFirstPart().StartsWith( branch ) ) // matched branch
+                        var leadCount = 1;
+                        if( linkRelativeToItsRepository.RemoveFirstPart( leadCount ).StartsWith( branch ) )
                         {
-                            var leadingCount = 1 + branch.Value.Count();
-                            linkRelativeToItsRepository = linkRelativeToItsRepository.RemoveFirstPart( leadingCount );
+                            // matched branch
+                            leadCount += branch.Value.Count();
+                            linkRelativeToItsRepository = linkRelativeToItsRepository.RemoveFirstPart( leadCount );
                         }
                         else
-                            return link;
+                            continue;
+                        // return link;
 
                         break;
+                    }
                     // If main page, can be linked by default
                     case "github.com":
                         // Default behavior
                         break;
+                    case "gitlab.com" when linkRelativeToItsRepository.StartsWith( "-/tree" )
+                                        || linkRelativeToItsRepository.StartsWith( "-/blob" ):
+                    {
+                        if( Parent.Configuration.EnableGitSupport is false ) return link;
+
+                        if( branch is null )
+                            throw new InvalidOperationException( "Cannot operate a Github link on a nonexistent git." );
+
+                        var leadCount = 2;
+                        if( linkRelativeToItsRepository.RemoveFirstPart( leadCount ).StartsWith( branch ) )
+                        {
+                            // matched branch
+                            leadCount += branch.Value.Count();
+                            linkRelativeToItsRepository = linkRelativeToItsRepository.RemoveFirstPart( leadCount );
+                        }
+                        else
+                            continue;
+                        // return link;
+
+                        break;
+                    }
                     case "gitlab.com":
-                        // TODO: gitlab support
+                        // Default behavior
                         break;
                     default:
                         // default uri behavior
@@ -136,7 +162,7 @@ internal class MdStack
                 var virtualLink = mdRepository.VirtualRoot.Combine( linkRelativeToItsRepository );
                 return virtualLink;
             }
-            else
+            else // Local absolute path transformation
             {
                 var virtualLink = mdRepository.VirtualRoot.Combine( linkRelativeToItsRepository );
                 return virtualLink;

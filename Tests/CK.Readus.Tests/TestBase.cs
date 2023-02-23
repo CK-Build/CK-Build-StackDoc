@@ -42,7 +42,8 @@ internal class TestBase
         {
             var documentationFilesCount = mdRepository.DocumentationFiles.Count;
             var url = mdRepository.RemoteUrl;
-            Add( $"Repository {repositoryName} at `{url}` contains {documentationFilesCount} md files" );
+            var branch = mdRepository.GitBranch.HasValue ? $" (branch:{ mdRepository.GitBranch })" : string.Empty;
+            Add( $"Repository {repositoryName}{branch} at `{url}` contains {documentationFilesCount} md files" );
             IndentUp();
 
             foreach( var (fullPath, mdDocument) in mdRepository.DocumentationFiles )
@@ -131,6 +132,11 @@ internal class TestBase
     /// 1 Repository => git with master develop testBranch.
     /// </summary>
     public MdContext GitContext { get; private set; }
+
+    /// <summary>
+    /// TODO summary
+    /// </summary>
+    public MdContext AdvancedGitContext { get; private set; }
 
     /// <summary>
     /// 1 Repository within a context that contains a single stack with this single repository.
@@ -262,6 +268,25 @@ internal class TestBase
                     new[]
                     {
                         ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                    }
+                ),
+            },
+            new MdContextConfiguration() { EnableLinkAvailabilityCheck = false, EnableGitSupport = true }
+        );
+
+        AdvancedGitContext = CreateContext
+        (
+            nameof( AdvancedGitContext ),
+            new[]
+            {
+                new ValueTuple<string, IEnumerable<(string local, string remote)>>
+                (
+                    "AdvancedGitStack",
+                    new[]
+                    {
+                        ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                        ("FooBarFakeRepo1-featureBranch", "https://github.com/Invenietis/FooBarFakeRepo1"),
+                        ("FooBarFakeRepo2", "https://gitlab.com/Invenietis/FooBarFakeRepo2"),
                     }
                 ),
             },

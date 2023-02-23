@@ -337,4 +337,31 @@ internal class MdStackTests : TestBase
         var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
         sut.Should().Be( expected );
     }
+
+    [Test]
+    [TestCase( "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/blob/master/Project/README.md", "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/blob/master/Project/README.md" )]
+    [TestCase( "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/tree/master/Project", "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/tree/master/Project" )]
+    [TestCase( "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/blob/develop/Project/README.md", "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/blob/develop/Project/README.md" )]
+    [TestCase( "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/README.md", "https://gitlab.com/Invenietis/FooBarFakeRepo1/-/README.md" )]
+    [TestCase( "https://gitlab.com/Invenietis/FooBarFakeRepo2/-/blob/master/Project/README.md", "https://gitlab.com/Invenietis/FooBarFakeRepo2/-/blob/master/Project/README.md" )]
+    [TestCase( "https://gitlab.com/Invenietis/FooBarFakeRepo2/-/blob/develop/Project/README.md", "~/FooBarFakeRepo2/Project/README.md" )]
+    public void TransformCrossRepositoryUrl_should_handle_gitlab_branches( string link, string expected )
+    {
+        var stack = AdvancedGitContext.Stacks.First().Value;
+
+        var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
+        sut.Should().Be( expected );
+    }
+
+    [Test]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/blob/master/Project/README.md", "~/FooBarFakeRepo1/Project/README.md" )]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/blob/feature/doSmth/Project/README.md", "~/FooBarFakeRepo1-featureBranch/Project/README.md" )]
+    [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/blob/develop/Project/README.md", "https://github.com/Invenietis/FooBarFakeRepo1/blob/develop/Project/README.md" )]
+    public void TransformCrossRepositoryUrl_should_handle_multiple_branches( string link, string expected )
+    {
+        var stack = AdvancedGitContext.Stacks.First().Value;
+
+        var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
+        sut.Should().Be( expected );
+    }
 }
