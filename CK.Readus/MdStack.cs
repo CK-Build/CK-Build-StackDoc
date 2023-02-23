@@ -113,8 +113,10 @@ internal class MdStack
                             throw new InvalidOperationException( "Cannot operate a Github link on a nonexistent git." );
 
                         if( linkRelativeToItsRepository.RemoveFirstPart().StartsWith( branch ) ) // matched branch
-                            linkRelativeToItsRepository = linkRelativeToItsRepository.RemoveFirstPart( 2 );
-                        //TODO: support branches name like a/b that correspond to multiple parts.
+                        {
+                            var leadingCount = 1 + branch.Value.Count();
+                            linkRelativeToItsRepository = linkRelativeToItsRepository.RemoveFirstPart( leadingCount );
+                        }
                         else
                             return link;
 

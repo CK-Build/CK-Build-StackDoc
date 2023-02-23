@@ -6,7 +6,7 @@ namespace CK.Readus;
 [DebuggerDisplay( "{Parent.StackName}::{RepositoryName}: {DocumentationFiles.Count} documents" )]
 internal class MdRepository
 {
-    public string? GitBranch { get; }
+    public NormalizedPath? GitBranch { get; }
     public string RepositoryName { get; }
 
     public NormalizedPath VirtualRoot => Parent.Parent.AttachToVirtualRoot( RootPath );
@@ -30,7 +30,7 @@ internal class MdRepository
         NormalizedPath rootPath,
         Dictionary<NormalizedPath, MdDocument> documentationFiles,
         MdStack parent,
-        string? gitBranch
+        NormalizedPath? gitBranch
     )
     {
         RepositoryName = repositoryName;

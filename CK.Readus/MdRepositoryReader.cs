@@ -35,7 +35,7 @@ internal class MdRepositoryReader
 
             var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
 
-            string? gitBranch = null;
+            NormalizedPath? gitBranch = null;
             if( mdStack.Parent.Configuration.EnableGitSupport )
             {
                 using var gitRepository = new Repository( rootPath );
