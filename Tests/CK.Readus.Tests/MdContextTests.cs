@@ -39,10 +39,10 @@ internal class MdContextTests : TestBase
     public void AttachToVirtualRoot_should_attach_single_repository_context()
     {
         var context = SingleRepositoryContext;
-        var stack = context.Stacks.First().Value;
+        var stack = context.Worlds.First().Value;
         var repository = stack.Repositories.First().Value;
 
-        var virtualPath = context.AttachToVirtualRoot( repository.RootPath );
+        var virtualPath = context.AttachToVirtualRoot( repository.LocalPath );
 
         virtualPath.Should().Be( "~" );
     }
@@ -51,10 +51,10 @@ internal class MdContextTests : TestBase
     public void AttachToVirtualRoot_should_attach_multi_repository_context()
     {
         var context = SimpleContext;
-        var stack = context.Stacks.First().Value;
+        var stack = context.Worlds.First().Value;
         var repository = stack.Repositories.First().Value;
 
-        var virtualPath = context.AttachToVirtualRoot( repository.RootPath );
+        var virtualPath = context.AttachToVirtualRoot( repository.LocalPath );
 
         var expected = new NormalizedPath( "~" ).AppendPart( repository.RepositoryName );
 

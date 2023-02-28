@@ -1,4 +1,6 @@
-﻿using CK.Core;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using CK.Core;
 using Markdig.Syntax.Inlines;
 
 namespace CK.Readus;
@@ -29,11 +31,25 @@ internal class MdBoundLink
     /// </summary>
     public NormalizedPath RootedPath { get; }
 
+    private NormalizedPath? _current;
+
     /// <summary>
     /// Current result.
     /// Transformations applied.
     /// </summary>
-    public NormalizedPath Current { get; set; }
+    public NormalizedPath Current
+    {
+        get
+        {
+            if( _current is null )
+            {
+                EnsureCurrent();
+            }
+
+            return _current.Value;
+        }
+        set => _current = value;
+    }
 
     public LinkInline MarkdownReference { get; }
 
@@ -58,20 +74,11 @@ internal class MdBoundLink
 
         OriginPath = new NormalizedPath( MarkdownReference.Url );
 
-        var context = Parent.Parent.Parent.Parent;
-
-        if( OriginPath.IsRelative() )
-            Current = Parent.VirtualLocation.Combine( OriginPath );
-        else if( OriginPath.StartsWith( context.VirtualRoot ) )
-            Current = context.AttachToVirtualRoot( OriginPath );
-        else
-            Current = new NormalizedPath( OriginPath );
-
         //TODO: this should be a check. This should not throw here
         if( OriginPath.IsEmptyPath ) throw new NotImplementedException( "A null link could maybe be deleted" );
 
         // This is probably enough in order to test if the NormalizedPath is rooted.
-        var originIsNotBoundToMdDocument = OriginPath.StartsWith( mdDocument.Directory ) is false;
+        var originIsNotBoundToMdDocument = OriginPath.StartsWith( Parent.Directory ) is false;
 
         //TODO: RootedPath may be a bad idea.
         // Right now It is rooted by file system root.
@@ -79,7 +86,7 @@ internal class MdBoundLink
         if( OriginPath.IsRooted )
             RootedPath = new NormalizedPath( OriginPath );
         else if( originIsNotBoundToMdDocument )
-            RootedPath = mdDocument.Directory.Combine( OriginPath ).ResolveDots();
+            RootedPath = Parent.Directory.Combine( OriginPath ).ResolveDots();
         else throw new NotImplementedException( $"Cannot determine a root for {OriginPath}" );
 
         // Repo level
@@ -91,10 +98,12 @@ internal class MdBoundLink
             else
                 LinkType = extension switch
                 {
-                    ".md" => LinkType.InternalMd,
-                    ""    => LinkType.InternalDirectory,
-                    ".cs" => LinkType.InternalCode,
-                    _     => LinkType.Unknown,
+                    ".md"  => LinkType.InternalMd,
+                    ""     => LinkType.InternalDirectory,
+                    ".cs"  => LinkType.InternalCode,
+                    ".sql" => LinkType.InternalCode,
+                    ".tql" => LinkType.InternalCode,
+                    _      => LinkType.Unknown,
                 };
         }
         else
@@ -102,7 +111,48 @@ internal class MdBoundLink
             LinkType = LinkType.External;
         }
 
-        if( LinkType == LinkType.Unknown ) new ActivityMonitor().Warn( $"LinkType could not be determined: {OriginPath}" );
+        if( LinkType == LinkType.Unknown )
+            new ActivityMonitor().Warn( $"LinkType could not be determined: {OriginPath}" );
+
+        // EnsureCurrent();
+    }
+
+    [MemberNotNull( nameof( _current ) )]
+    private void EnsureCurrent()
+    {
+        var mdRepository = Parent.Parent;
+        var context = mdRepository.Parent.Parent;
+
+        if( LinkType == LinkType.InternalCode )
+        {
+            var remote = mdRepository.RemoteUrl;
+            var host = new Uri( remote ).Host;
+
+            var basePath = host switch
+            {
+                "gitlab.com" => remote.AppendPart( "-" ),
+                "github.com" => remote,
+                _            => throw new NotSupportedException( $"{host} not supported" )
+            };
+
+            var fromRepoToDoc = Parent.LocalPath
+                                      .RemoveLastPart() // file .md part
+                                      .RemoveFirstPart( mdRepository.LocalPath.Count() ); // common with repo
+            var t = mdRepository.GitRef;
+            Current = basePath.AppendPart( "blob" )
+                              .Combine( mdRepository.GitRef ?? mdRepository.GitBranch ?? "master" )
+                              .Combine( fromRepoToDoc )
+                              .Combine( OriginPath )
+                              .ResolveDots();
+        }
+        else if( OriginPath.IsRelative() )
+            Current = Parent.VirtualLocation.Combine( OriginPath );
+        else if( OriginPath.StartsWith( context.VirtualRoot ) )
+            Current = context.AttachToVirtualRoot( OriginPath );
+        else
+            Current = new NormalizedPath( OriginPath );
+
+        Debug.Assert( _current is not null );
     }
 }
 

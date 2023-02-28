@@ -38,7 +38,7 @@ internal class LinkProcessor
 
 
             using var documentInfo = m
-                                     .OpenInfo( $"Processing '{mdDocument.OriginPath}'" )
+                                     .OpenInfo( $"Processing '{mdDocument.LocalPath}'" )
                                      .ConcludeWith( () => $"Processed '{mdDocument.DocumentName}'" );
 
 

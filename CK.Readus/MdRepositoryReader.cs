@@ -12,19 +12,17 @@ internal class MdRepositoryReader
     public MdRepository ReadPath
     (
         IActivityMonitor monitor,
-        NormalizedPath rootPath,
-        NormalizedPath remoteUrl,
-        MdStack mdStack
+        RepositoryInfo repositoryInfo,
+        MdWorld mdWorld
     )
     {
-        Throw.CheckArgument( !rootPath.IsEmptyPath );
+        Throw.CheckArgument( repositoryInfo.IsValid );
 
-        using( monitor.OpenInfo( $"Reading repository '{rootPath}'" ) )
+        using( monitor.OpenInfo( $"Reading repository '{repositoryInfo.Local}'" ) )
         {
-            var repositoryName = rootPath.LastPart;
             var filesPaths = Directory.GetFiles
                                       (
-                                          rootPath.Path,
+                                          repositoryInfo.Local.Path,
                                           "*.md",
                                           new EnumerationOptions { RecurseSubdirectories = true }
                                       )
@@ -36,20 +34,18 @@ internal class MdRepositoryReader
             var documentationFiles = new Dictionary<NormalizedPath, MdDocument>( filesPaths.Length );
 
             NormalizedPath? gitBranch = null;
-            if( mdStack.Parent.Configuration.EnableGitSupport )
+            if( mdWorld.Parent.Configuration.EnableGitSupport )
             {
-                using var gitRepository = new Repository( rootPath );
+                using var gitRepository = new Repository( repositoryInfo.Local );
                 gitBranch = gitRepository.Head.FriendlyName;
             }
 
             var mdRepository = new MdRepository
             (
-                repositoryName,
-                remoteUrl,
-                rootPath,
                 documentationFiles,
-                mdStack,
-                gitBranch
+                mdWorld,
+                gitBranch,
+                repositoryInfo
             );
 
             foreach( var file in filesPaths )
@@ -61,7 +57,7 @@ internal class MdRepositoryReader
 
             monitor.Info
             (
-                $"Repository '{repositoryName}' contains a total of "
+                $"Repository '{repositoryInfo.Name}' contains a total of "
               + $"{documentationFiles.Values.Select( v => v.MarkdownBoundLinks.Count ).Sum()} links"
               + $" within {filesPaths.Length} md files."
             );

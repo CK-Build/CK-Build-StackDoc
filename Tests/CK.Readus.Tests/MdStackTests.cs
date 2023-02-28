@@ -15,7 +15,7 @@ internal class MdStackTests : TestBase
     [Test]
     public void Generate_should_write_simple_stack()
     {
-        var name = "foo-bar";
+        var name = FakeWorldInfo("foo-bar");
 
         var basePath = InFolder.AppendPart( "SimpleStack" );
 
@@ -33,10 +33,16 @@ internal class MdStackTests : TestBase
         var repositories = new List<(NormalizedPath, NormalizedPath)>();
         foreach( var repoPath in repoPaths )
         {
-            repositories.Add( (repoPath, string.Empty) );
+            repositories.Add( (repoPath, "whatever") );
         }
 
-        var sut = MdStack.Load( Monitor, name, repositories, SimpleContext );
+        var sut = MdWorld.Load
+        (
+            Monitor,
+            name,
+            repositories.Select( r => new RepositoryInfo( r.Item1, r.Item2 ) ).ToArray(),
+            SimpleContext
+        );
 
         var outputPath = OutFolder.AppendPart( "SimpleStack_Generated" );
 
@@ -49,7 +55,7 @@ internal class MdStackTests : TestBase
     {
         //TODO: This test could be used when it is possible to add a repository afterward
         // An other case could be using a stack that has been fed to the context.
-        var name = "foo-bar";
+        var name = FakeWorldInfo("foo-bar");
 
         var basePath = InFolder.AppendPart( "SimpleStack" );
 
@@ -70,7 +76,14 @@ internal class MdStackTests : TestBase
             repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = MdStack.Load( Monitor, name, repositories, SimpleContext );
+        var sut = MdWorld.Load
+        (
+            Monitor,
+            name,
+            repositories.Select( r => new RepositoryInfo( r.Item1, r.Item2 ) )
+                        .ToArray(),
+            SimpleContext
+        );
         foreach( var (repositoryName, mdRepository) in sut.Repositories )
         {
             // mdRepository.EnsureLinks( Monitor );
@@ -87,7 +100,7 @@ internal class MdStackTests : TestBase
     [Explicit( "Uses an obsolete method" )]
     public void Generate_should_write_simple_stack_with_cross_links_and_transform_to_html()
     {
-        var name = "foo-bar";
+        var name = FakeWorldInfo("foo-bar");
 
         var basePath = InFolder.AppendPart( "SimpleStackWithCrossRef" );
 
@@ -108,7 +121,14 @@ internal class MdStackTests : TestBase
             repositories.Add( (repoPath, string.Empty) );
         }
 
-        var sut = MdStack.Load( Monitor, name, repositories, default );
+        var sut = MdWorld.Load
+        (
+            Monitor,
+            name,
+            repositories.Select( r => new RepositoryInfo( r.Item1, r.Item2 ) )
+                        .ToArray(),
+            default
+        );
         foreach( var (repositoryName, mdRepository) in sut.Repositories )
         {
             // mdRepository.EnsureLinks( Monitor );
@@ -124,7 +144,7 @@ internal class MdStackTests : TestBase
     [Test]
     public void TransformCrossRepositoryUrl_should_return_same_link_when_not_uri()
     {
-        var stackName = "foo-bar";
+        var stackName = FakeWorldInfo("foo-bar");
 
         var basePath = InFolder.AppendPart( "SimpleStackWithCrossRef" );
 
@@ -155,7 +175,14 @@ internal class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, CrossRefContext );
+        var mdStack = MdWorld.Load
+        (
+            Monitor,
+            stackName,
+            repositoriesInfo.Select( r => new RepositoryInfo( r.Item1, r.Item2 ) )
+                            .ToArray(),
+            CrossRefContext
+        );
 
         var urlsUnderTest = new[]
         {
@@ -184,7 +211,7 @@ internal class MdStackTests : TestBase
     [Test]
     public void TransformCrossRepositoryUrl_should_return_same_link_when_not_cross_ref()
     {
-        var stackName = "foo-bar";
+        var stackName = FakeWorldInfo("foo-bar");
 
         var basePath = InFolder.AppendPart( "SimpleStackWithCrossRef" );
 
@@ -215,7 +242,14 @@ internal class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, CrossRefContext );
+        var mdStack = MdWorld.Load
+        (
+            Monitor,
+            stackName,
+            repositoriesInfo.Select( r => new RepositoryInfo( r.Item1, r.Item2 ) )
+                            .ToArray(),
+            CrossRefContext
+        );
 
         var urlsUnderTest = new[]
         {
@@ -238,7 +272,7 @@ internal class MdStackTests : TestBase
     [Test]
     public void TransformCrossRepositoryUrl_should_return_local_path_when_cross_ref()
     {
-        var stackName = "foo-bar";
+        var stackName = FakeWorldInfo("foo-bar");
 
         var basePath = InFolder.AppendPart( "SimpleStackWithCrossRef" );
 
@@ -268,7 +302,14 @@ internal class MdStackTests : TestBase
             repositoriesInfo.Add( (repoPath, repoRemotes[index]) );
         }
 
-        var mdStack = MdStack.Load( Monitor, stackName, repositoriesInfo, CrossRefContext );
+        var mdStack = MdWorld.Load
+        (
+            Monitor,
+            stackName,
+            repositoriesInfo.Select( r => new RepositoryInfo( r.Item1, r.Item2 ) )
+                            .ToArray(),
+            CrossRefContext
+        );
 
         var urlUnderTest = repoRemotes[1];
         var expected = "~/FooBarFakeRepo2";
@@ -316,7 +357,7 @@ internal class MdStackTests : TestBase
     [TestCaseSource( nameof( TransformCrossRepositoryUrlShouldBeIdempotentData ) )]
     public void TransformCrossRepositoryUrl_should_be_idempotent( string link, string expected )
     {
-        var stack = CrossRefContext.Stacks.First().Value;
+        var stack = CrossRefContext.Worlds.First().Value;
 
         var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
         sut.Should().Be( expected );
@@ -332,7 +373,7 @@ internal class MdStackTests : TestBase
     [TestCase( "https://github.com/Invenietis/FooBarFakeRepo2/blob/master/Project/README.md", "https://github.com/Invenietis/FooBarFakeRepo2/blob/master/Project/README.md" )]
     public void TransformCrossRepositoryUrl_should_handle_github_branches( string link, string expected )
     {
-        var stack = GitContext.Stacks.First().Value;
+        var stack = GitContext.Worlds.First().Value;
 
         var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
         sut.Should().Be( expected );
@@ -347,7 +388,7 @@ internal class MdStackTests : TestBase
     [TestCase( "https://gitlab.com/Invenietis/FooBarFakeRepo2/-/blob/develop/Project/README.md", "~/FooBarFakeRepo2/Project/README.md" )]
     public void TransformCrossRepositoryUrl_should_handle_gitlab_branches( string link, string expected )
     {
-        var stack = AdvancedGitContext.Stacks.First().Value;
+        var stack = AdvancedGitContext.Worlds.First().Value;
 
         var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
         sut.Should().Be( expected );
@@ -359,7 +400,7 @@ internal class MdStackTests : TestBase
     [TestCase( "https://github.com/Invenietis/FooBarFakeRepo1/blob/develop/Project/README.md", "https://github.com/Invenietis/FooBarFakeRepo1/blob/develop/Project/README.md" )]
     public void TransformCrossRepositoryUrl_should_handle_multiple_branches( string link, string expected )
     {
-        var stack = AdvancedGitContext.Stacks.First().Value;
+        var stack = AdvancedGitContext.Worlds.First().Value;
 
         var sut = stack.TransformCrossRepositoryUrl( Monitor, link );
         sut.Should().Be( expected );

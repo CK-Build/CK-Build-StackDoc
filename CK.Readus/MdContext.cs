@@ -8,7 +8,7 @@ namespace CK.Readus;
 // If the name can me Md[..]Context with [..] being after "Stack" alphabetically,
 // the solution explorer will display all the components in the right order.
 
-[DebuggerDisplay( "{Stacks.Count} stacks" )]
+[DebuggerDisplay( "{Worlds.Count} stacks" )]
 public class MdContext
 {
     internal LinkChecker LinkChecker { get; }
@@ -36,7 +36,7 @@ public class MdContext
         if( path.StartsWith( VirtualRoot, false ) is false )
             throw new InvalidOperationException
             (
-                $"Either this method should not have been called or there is a bug in VirtualRoot computing."
+                $"VirtualRoot is probably inconsistent."
               + $" Path is {path} and VirtualRoot is {VirtualRoot}"
             );
 
@@ -51,20 +51,14 @@ public class MdContext
     }
 
     /// <summary>
-    /// Key is stack name.
+    /// Key is world name.
     /// </summary>
-    internal IDictionary<string, MdStack> Stacks { get; init; }
+    internal IDictionary<WorldInfo, MdWorld> Worlds { get; init; }
 
-    // TODO: Remove this or change than as dictionary to link them to a document
-    // This can be initialized in the ctor with the help of GetTransforms and GetChecks
-    // And could even be customized before/after
-    // Without customization there is not much point.
-    // private IList<Func<IActivityMonitor, NormalizedPath, NormalizedPath>> _transformers;
-    // private IList<Action<IActivityMonitor, NormalizedPath>> _checkers;
     public NormalizedPath OutputPath { get; private set; }
 
     //TODO: Make it IEnumerable<MdDocument>
-    internal MdDocument[] AllDocuments => Stacks.Values
+    internal MdDocument[] AllDocuments => Worlds.Values
                                                 .SelectMany( s => s.Repositories.Values )
                                                 .SelectMany( repository => repository.DocumentationFiles.Values )
                                                 .ToArray();
@@ -74,9 +68,10 @@ public class MdContext
 
     public MdContextConfiguration Configuration { get; }
 
+    [Obsolete( "Use factory" )]
     public MdContext
     (
-        IEnumerable<(string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)> stacks,
+        IEnumerable<(WorldInfo, IEnumerable<RepositoryInfo> repositories)> stacks,
         MdContextConfiguration? configuration = null
     ) : this( configuration )
     {
@@ -84,39 +79,46 @@ public class MdContext
         task.GetAwaiter().GetResult();
     }
 
+    [Obsolete( "Use factory" )]
     public MdContext
     (
-        string stackName,
-        IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories,
+        WorldInfo worldInfo,
+        IEnumerable<RepositoryInfo> repositories,
         MdContextConfiguration? configuration = null
     )
     : this
     (
-        new (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)[]
+        new (WorldInfo worldInfo, IEnumerable<RepositoryInfo> repositories)[]
         {
-            new( stackName, repositories ),
+            new( worldInfo, repositories ),
         },
         configuration
     ) { }
 
-    private MdContext( MdContextConfiguration? configuration )
+    /// <summary>
+    /// Configure a new context.
+    /// Call <see cref="RegisterRepositories"/> to work on it.
+    /// </summary>
+    /// <param name="configuration"></param>
+    internal MdContext( MdContextConfiguration? configuration )
     {
-        Stacks = new Dictionary<string, MdStack>();
+        Worlds = new Dictionary<WorldInfo, MdWorld>();
         LinkChecker = new LinkChecker();
         Configuration = configuration ?? MdContextConfiguration.DefaultConfiguration();
+        _linkProcessor = new LinkProcessor();
     }
 
     private async Task InitAsync
     (
-        (string stackName, IEnumerable<(NormalizedPath local, NormalizedPath remote)> repositories)[] stacks
+        (WorldInfo, IEnumerable<RepositoryInfo> repositories)[] stacks
     )
     {
-        var monitor = new ActivityMonitor(); // I don't know if I should just pass it as ctor arg.
+        var monitor = new ActivityMonitor();
 
         // I could probably take only one repo per stack => only when multi stack
         var repositoriesPaths = stacks
                                 .SelectMany( s => s.repositories )
-                                .Select( r => r.local )
+                                .Select( r => r.Local )
                                 .ToArray();
 
         var commonRoot = repositoriesPaths[0];
@@ -127,25 +129,81 @@ public class MdContext
 
         VirtualRoot = commonRoot;
 
-        foreach( var (stackName, repositories) in stacks )
+        foreach( var (worldInfo, repositories) in stacks )
         {
-            var mdStack = MdStack.Load( monitor, stackName, repositories, this );
-            if( Stacks.TryAdd( stackName, mdStack ) is false )
-                throw new ArgumentException( "This stack is already registered: ", stackName );
+            var mdStack = MdWorld.Load( monitor, worldInfo, repositories.ToArray(), this );
+            if( Worlds.TryAdd( worldInfo, mdStack ) is false )
+                throw new ArgumentException( "This stack is already registered: ", worldInfo.Name );
         }
 
         IsOk = true;
 
-        foreach( var (name, mdStack) in Stacks )
+        foreach( var (name, mdStack) in Worlds )
         {
             var processingOk = await EnsureProcessingAsync( monitor, mdStack );
             IsOk = IsOk && processingOk;
         }
 
-        //TODO: This is then initialized with everything ready :
-        // the next step is a method that apply output changes like .md to .html
         //TODO: Could add the possibility to add a stack or a repo afterward and process it directly.
         // if the apply has been called, it should not be possible to add more elements
+    }
+
+    private void EnsureVirtualRoot()
+    {
+        //todo: virtual has to be computed based on not registered yet repositories
+        // either add a parameter that take future repo into account.
+        // Or delay usage of virtual root after creation. Meaning that MdDocument.Current for example,
+        // is computed afterward. May be complex.
+
+        // virtual per world ?
+        var repositoriesPaths = Worlds.Values
+                                      .SelectMany( w => w.Repositories )
+                                      .Select( r => r.Value.LocalPath )
+                                      .ToArray();
+
+        var commonRoot = repositoriesPaths[0];
+        foreach( var repositoryPath in repositoriesPaths.Skip( 1 ) )
+        {
+            commonRoot = repositoryPath.GetCommonLeadingParts( commonRoot );
+        }
+
+        VirtualRoot = commonRoot;
+    }
+
+    /// <summary>
+    /// Add repositories to the world, or create it if not existing yet.
+    /// World is created even if no repository is provided. Note that an empty world won't affect any behavior.
+    /// </summary>
+    /// <param name="monitor"></param>
+    /// <param name="worldInfo">Used as key to determine world uniqueness</param>
+    /// <param name="repositoriesInfo"></param>
+    public async Task RegisterRepositoriesAsync
+    (
+        IActivityMonitor monitor,
+        WorldInfo worldInfo,
+        params RepositoryInfo[] repositoriesInfo
+    )
+    {
+        Throw.CheckNotNullArgument( nameof( worldInfo ) );
+
+        if( Worlds.ContainsKey( worldInfo ) )
+        {
+            Worlds[worldInfo].Load( monitor, repositoriesInfo );
+        }
+        else
+        {
+            var mdWorld = MdWorld.Load( monitor, worldInfo, repositoriesInfo, this );
+            Worlds.Add( worldInfo, mdWorld );
+        }
+
+        EnsureVirtualRoot();//TODO: move it up with support of candidate
+        IsOk = true;
+        foreach( var mdWorld in Worlds )
+        {
+            //TODO: reset current ?
+            var processingOk = await EnsureProcessingAsync( monitor, mdWorld.Value );
+            IsOk = IsOk && processingOk;
+        }
     }
 
     public void SetOutputPath( NormalizedPath outputPath )
@@ -175,15 +233,14 @@ public class MdContext
         Apply( monitor );
     }
 
-    private async Task<bool> EnsureProcessingAsync( IActivityMonitor monitor, MdStack mdStack )
+    private async Task<bool> EnsureProcessingAsync( IActivityMonitor monitor, MdWorld mdWorld )
     {
         var isOk = true;
 
-        var processor = new LinkProcessor();
-        foreach( var (path, mdRepository) in mdStack.Repositories )
+        foreach( var (_, mdRepository) in mdWorld.Repositories )
         {
             var mdDocuments = mdRepository.DocumentationFiles.Values.ToArray();
-            var processingResult = await processor.ProcessAsync
+            var processingResult = await _linkProcessor.ProcessAsync
             (
                 monitor,
                 mdDocuments,
@@ -199,12 +256,31 @@ public class MdContext
         // If any error is raised, return false.
     }
 
+    /// <summary>
+    /// Key is location. Value is output.
+    /// </summary>
+    // private Dictionary<NormalizedPath, NormalizedPath> _codeFiles;
+
+    private readonly LinkProcessor _linkProcessor;
+
     private async Task<bool> EnsurePostProcessingAsync( IActivityMonitor monitor )
     {
-        var processor = new LinkProcessor();
+        //TODO: Having a Current and a Resolved or smth would help here
+        // For example, it is necessary to resolve post process on links before documents.
+        // If the order is inverted, the post process on links will be unable to resolve virtual links to concrete links.
+        // It is only performance issue tbh.
 
-        var processingResult = await processor.ProcessAsync
-        ( monitor, AllDocuments, default, default, GetPostProcessTransforms );
+        // var codeLinks = AllDocuments.SelectMany( d => d.GetLinkedCodeFiles( monitor ) );
+        // _codeFiles = new Dictionary<NormalizedPath, NormalizedPath>();
+        // foreach( var (location, virtuallyRooted) in codeLinks )
+        // {
+        //     // prepare for output
+        //     var output = OutputPath.Combine( virtuallyRooted.RemovePrefix( "~" ) );
+        //     _codeFiles.TryAdd( location, output );
+        // }
+
+        var processingResult = await _linkProcessor
+        .ProcessAsync( monitor, AllDocuments, default, default, GetPostProcessTransforms );
 
         foreach( var mdDocument in AllDocuments )
         {
@@ -229,7 +305,7 @@ public class MdContext
         }
 
         // Html
-        foreach( var (name, mdStack) in Stacks )
+        foreach( var (name, mdStack) in Worlds )
         {
             mdStack.Generate( monitor, OutputPath );
         }
@@ -241,6 +317,20 @@ public class MdContext
 
         // Css
         HtmlWriter.WriteCss( this );
+
+        // // Code files
+        // foreach( var (location, output) in _codeFiles )
+        // {
+        //     Directory.CreateDirectory( output.RemoveLastPart() );
+        //     try
+        //     {
+        //         File.Copy( location, output );
+        //     }
+        //     catch( Exception e )
+        //     {
+        //         monitor.Fatal( e );
+        //     }
+        // }
     }
 
     private Action<IActivityMonitor, NormalizedPath>[] GetChecks( MdDocument mdDocument )
@@ -299,11 +389,10 @@ public class MdContext
         return transforms;
     }
 
-
     internal string GenerateHtmlToc( IActivityMonitor monitor, MdDocument? mdDocument = default )
     {
         var builder = new StringBuilder();
-        foreach( var (_, mdStack) in Stacks )
+        foreach( var (_, mdStack) in Worlds )
         {
             builder.AppendLine( @$"<a class=""pure-menu-heading"" href="""">{mdStack.StackName}</a>" );
             builder.AppendLine( @$"<ul class=""pure-menu-list"">" );

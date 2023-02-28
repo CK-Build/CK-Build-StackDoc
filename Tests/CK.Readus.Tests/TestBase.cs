@@ -30,7 +30,7 @@ internal class TestBase
         void IndentDown() => i = i.Remove( i.Length - 2, 2 );
         StringBuilder Add( string line ) => builder.AppendLine( i + line );
 
-        var (stackName, mdStack) = context.Stacks.First();
+        var (stackName, mdStack) = context.Worlds.First();
         var repositoriesCount = mdStack.Repositories.Count;
 
         Add( $"<=> Property {title} <=>" );
@@ -79,7 +79,7 @@ internal class TestBase
     public static string GetContextContent( string repositoryName, MdRepository repository )
     {
         var context = repository.Parent.Parent;
-        var local = repository.RootPath;
+        var local = repository.LocalPath;
         var remote = repository.RemoteUrl;
         var notes = $"Expose repository: {remote} on disk '{local}'";
         return GetContextContent( repositoryName, context, notes );
@@ -89,7 +89,7 @@ internal class TestBase
     {
         var context = document.Parent.Parent.Parent;
         var remote = document.Parent.RemoteUrl;
-        var path = document.OriginPath;
+        var path = document.LocalPath;
         var notes = $"Expose document '{path}' from repository: {remote}";
         return GetContextContent( repositoryName, context, notes );
     }
@@ -160,6 +160,11 @@ internal class TestBase
     /// 1 Document within a context that contains a single stack with 2 repositories with cross references.
     /// </summary>
     public MdDocument DocumentWithinMultiRepositoryStack { get; private set; }
+
+    public WorldInfo FakeWorldInfo(string name)
+    {
+        return new WorldInfo( name, Guid.NewGuid().ToString() );
+    }
 
     private void GenerateContexts()
     {
@@ -303,7 +308,7 @@ internal class TestBase
             {
                 ("FooBarFakeRepo1", "https://github.com/Invenietis/FooBarFakeRepo1"),
             }
-        ).Stacks.First().Value.Repositories.First().Value;
+        ).Worlds.First().Value.Repositories.First().Value;
 
         NoReadmeRepository = CreateContext
         (
@@ -312,7 +317,7 @@ internal class TestBase
             {
                 ("FooBarFakeRepoNoREADME", "https://github.com/Invenietis/FooBarFakeRepoNoREADME"),
             }
-        ).Stacks.First().Value.Repositories.First().Value;
+        ).Worlds.First().Value.Repositories.First().Value;
 
 
     }
@@ -329,7 +334,7 @@ internal class TestBase
                 }
             );
 
-            var repository = context.Stacks.First().Value.Repositories.First().Value;
+            var repository = context.Worlds.First().Value.Repositories.First().Value;
             DummyDocument = repository.DocumentationFiles.First().Value;
         }
 
@@ -344,7 +349,7 @@ internal class TestBase
                 }
             );
 
-            var repository = context.Stacks.First().Value.Repositories.First().Value;
+            var repository = context.Worlds.First().Value.Repositories.First().Value;
             DocumentWithinMultiRepositoryStack = repository.DocumentationFiles.First().Value;
         }
     }
@@ -420,15 +425,35 @@ internal class TestBase
                     Monitor.Fatal( $"Expected .git to exist here `{gitFolderOn}`." );
             }
 
-        var mdContext = new MdContext( stacks, configuration );
+        var mdContext = new MdContextFactory().CreateContext
+        (
+            Monitor,
+            configuration ?? MdContextConfiguration.DefaultConfiguration()
+        );
+        var worldInfos = new List<WorldInfo>();
+        foreach( var (stackName, repositories) in stacks )
+        {
+            var worldInfo = FakeWorldInfo( stackName );
+            worldInfos.Add( worldInfo );
+            mdContext.RegisterRepositoriesAsync
+                     (
+                         Monitor,
+                         worldInfo,
+                         repositories.Select( r => new RepositoryInfo( r.local, r.remote ) ).ToArray()
+                     )
+                     .ConfigureAwait( false )
+                     .GetAwaiter()
+                     .GetResult();
+        }
 
         var outputPath = OutFolder.AppendPart( $"_{contextName}" );
         TestHelper.CleanupFolder( outputPath );
         mdContext.SetOutputPath( outputPath );
 
-        foreach( var (stackName, repositories) in stacks )
+        for( var i = 0; i < stacks.Length; i++ )
         {
-            ContextGenericAssertions( stackName, repositories.ToArray(), mdContext );
+            var (stackName, repositories) = stacks[i];
+            ContextGenericAssertions( worldInfos[i], repositories.ToArray(), mdContext );
         }
 
         return mdContext;
@@ -445,11 +470,25 @@ internal class TestBase
         foreach( var (local, remote) in repositories )
             repositoriesInfo.Add( (basePath.AppendPart( local ), remote) );
 
-        var mdContext = new MdContext( stackName, repositoriesInfo );
+
+        var mdContext = new MdContextFactory().CreateContext
+        (
+            Monitor
+        );
+        var worldInfo = FakeWorldInfo( stackName );
+        mdContext.RegisterRepositoriesAsync
+                 (
+                     Monitor,
+                     worldInfo,
+                     repositoriesInfo.Select( r => new RepositoryInfo( r.local, r.remote ) ).ToArray()
+                 )
+                 .ConfigureAwait( false )
+                 .GetAwaiter()
+                 .GetResult();
 
         #region Assertions
 
-        ContextGenericAssertions( stackName, repositoriesInfo.ToArray(), mdContext );
+        ContextGenericAssertions( worldInfo, repositoriesInfo.ToArray(), mdContext );
 
         #endregion
 
@@ -462,14 +501,14 @@ internal class TestBase
 
     private static void ContextGenericAssertions
     (
-        string stackName,
+        WorldInfo worldInfo,
         (NormalizedPath local, NormalizedPath remote)[] repositories,
         MdContext mdContext
     )
     {
-        mdContext.Stacks.Should().ContainKey( stackName );
-        var mdStack = mdContext.Stacks[stackName];
-        mdStack.StackName.Should().Be( stackName );
+        mdContext.Worlds.Should().ContainKey( worldInfo );
+        var mdStack = mdContext.Worlds[worldInfo];
+        mdStack.StackName.Should().Be( worldInfo.Name );
         mdStack.Parent.Should().Be( mdContext );
         var mdRepositories = mdStack.Repositories;
         mdRepositories.Count.Should().Be( repositories.Length );

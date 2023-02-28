@@ -12,6 +12,8 @@ Implement :
 - ✔️Support gitlab
 - ✔️Support Multi-parts branches
 - Copy internal targeted files (img and cs code)
+- Create a repository with a tag version. Link versioned
+-
 - ✔️Check url availability
 - ✔️A link to a directory should look for a README.md (or index)
 - ✔️Handle file extension transformation in the right component

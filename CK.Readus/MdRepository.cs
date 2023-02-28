@@ -7,17 +7,24 @@ namespace CK.Readus;
 internal class MdRepository
 {
     public NormalizedPath? GitBranch { get; }
-    public string RepositoryName { get; }
 
-    public NormalizedPath VirtualRoot => Parent.Parent.AttachToVirtualRoot( RootPath );
+    /// <summary>
+    /// Usually, repository version found in a git tag.
+    /// </summary>
+    public NormalizedPath? GitRef =>  string.IsNullOrWhiteSpace(Info.Version) ? (NormalizedPath?)null: Info.Version;
 
-    public NormalizedPath RootPath { get; }
+    public RepositoryInfo Info { get; }
 
-    public NormalizedPath RemoteUrl { get; }
+    public string RepositoryName => Info.Name;
 
-    public MdStack Parent { get; }
+    public NormalizedPath VirtualRoot => Parent.Parent.AttachToVirtualRoot( LocalPath );
 
-    // TODO: this could be readonly dictionary ?
+    public NormalizedPath LocalPath => Info.Local;
+
+    public NormalizedPath RemoteUrl => Info.Remote;
+
+    public MdWorld Parent { get; }
+
     /// <summary>
     /// Key is full path.
     /// </summary>
@@ -25,20 +32,16 @@ internal class MdRepository
 
     public MdRepository
     (
-        string repositoryName,
-        NormalizedPath remoteUrl,
-        NormalizedPath rootPath,
         Dictionary<NormalizedPath, MdDocument> documentationFiles,
-        MdStack parent,
-        NormalizedPath? gitBranch
+        MdWorld parent,
+        NormalizedPath? gitBranch,
+        RepositoryInfo repositoryInfo
     )
     {
-        RepositoryName = repositoryName;
-        RemoteUrl = remoteUrl;
-        RootPath = rootPath;
         DocumentationFiles = documentationFiles;
         Parent = parent;
         GitBranch = gitBranch;
+        Info = repositoryInfo;
     }
 
     public bool TryGetReadme( out NormalizedPath readme )

@@ -1,12 +1,14 @@
 ﻿using System.Diagnostics;
-using System.Text;
 using CK.Core;
 
 namespace CK.Readus;
 
 [DebuggerDisplay( "{StackName}: {Repositories.Count} repositories" )]
-internal class MdStack
+internal class MdWorld
 {
+    private readonly MdRepositoryReader _repositoryReader = new();
+
+    public WorldInfo Info { get; }
     public MdContext Parent { get; }
 
     /// <summary>
@@ -14,42 +16,51 @@ internal class MdStack
     /// </summary>
     public IDictionary<string, MdRepository> Repositories { get; }
 
-    public string StackName { get; }
+    public string StackName => Info.Name;
+    public string StackVersion => Info.Version;
 
-    // public MdStack( IDictionary<string, MdRepository> repositories, string stackName )
-    // {
-    //     Repositories = repositories;
-    //     StackName = stackName;
-    // }
-
-    public MdStack( string stackName, MdContext parent )
+    private MdWorld( WorldInfo worldInfo, MdContext parent )
     {
-        StackName = stackName;
         Repositories = new Dictionary<string, MdRepository>();
+        Info = worldInfo;
         Parent = parent;
     }
 
-    public static MdStack Load
+
+    // WIP: Load can add or update ?
+    /// <summary>
+    /// A World represent a stack of repositories designed for a specific purpose, at a specified version for each of them. It represent a coherent
+    /// whole, whom each part can be associated internally.
+    /// </summary>
+    /// <param name="monitor"></param>
+    /// <param name="worldInfo"></param>
+    /// <param name="repositoriesInfo"></param>
+    /// <param name="parent"></param>
+    /// <returns></returns>
+    public static MdWorld Load
     (
         IActivityMonitor monitor,
-        string stackName,
-        IEnumerable<(NormalizedPath localPath, NormalizedPath remoteUrl)> repositoriesInfo, //TODO dico. Path is uniq
+        WorldInfo worldInfo,
+        RepositoryInfo[] repositoriesInfo,
         MdContext parent
     )
     {
-        using var info = monitor.OpenInfo( $"Loading stack '{stackName}'" );
+        using var info = monitor.OpenInfo( $"Loading stack '{worldInfo.Name}'" );
 
-        var mdStack = new MdStack( stackName, parent );
+        var mdStack = new MdWorld( worldInfo, parent );
 
-        var repositoryFactory = new MdRepositoryReader();
-
-        foreach( var repoPath in repositoriesInfo )
-        {
-            var repository = repositoryFactory.ReadPath( monitor, repoPath.localPath, repoPath.remoteUrl, mdStack );
-            mdStack.Repositories.Add( repository.RepositoryName, repository );
-        }
+        mdStack.Load( monitor, repositoriesInfo );
 
         return mdStack;
+    }
+
+    public void Load( IActivityMonitor monitor, params RepositoryInfo[] repositoriesInfo )
+    {
+        foreach( var repositoryInfo in repositoriesInfo )
+        {
+            var repository = _repositoryReader.ReadPath( monitor, repositoryInfo, this );
+            Repositories.Add( repository.RepositoryName, repository );
+        }
     }
 
     public void Generate( IActivityMonitor monitor, NormalizedPath outputPath )
@@ -74,18 +85,18 @@ internal class MdStack
         if( link.IsRelative() ) return link; // Should not happen
         if // virtual ~ already
         (
-            link.RootKind == NormalizedPathRootKind.RootedByFirstPart
-         && link.StartsWith( "~" )
+            link.RootKind is NormalizedPathRootKind.RootedByFirstPart
+         && link.FirstPart.Equals( "~" )
         )
             return link;
 
         var isUri = link.RootKind == NormalizedPathRootKind.RootedByURIScheme;
 
-        var repositories = Parent.Stacks.Values.SelectMany( s => s.Repositories );
+        var repositories = Parent.Worlds.Values.SelectMany( s => s.Repositories );
 
         foreach( var (_, mdRepository) in repositories )
         {
-            var target = isUri ? mdRepository.RemoteUrl : mdRepository.RootPath;
+            var target = isUri ? mdRepository.RemoteUrl : mdRepository.LocalPath;
 
             Debug.Assert( target.IsEmptyPath is false, "target.IsEmptyPath is false" );
             // Strict has to be false because by default when both path are equals it return false.
@@ -101,7 +112,16 @@ internal class MdStack
                 var uri = new Uri( link, UriKind.Absolute );
                 var host = uri.Host;
                 var branch = mdRepository.GitBranch;
-
+/* default branch or even any branch can be here.
+ * Considerations:
+ * Source repo which contains the link (in doc) has a branch that can be known.
+ * The link exist as is, so we can assume it is valid user wise. (can human error but we don't care)
+ * Destination repo is targeted. We can read all of its local (and remote ?) branches.
+ * We can compare all of the branches to the link to find the matching one.
+ *
+ * At the end, if the link target a specific branch, we may want to link it only if the branch is loaded, like it is
+ * done right now...
+ */
                 switch( host )
                 {
                     // branches
@@ -173,14 +193,4 @@ internal class MdStack
     }
 
     public void CheckStack( IActivityMonitor monitor, NormalizedPath link ) { }
-}
-
-public static class StringBuilderExtensions
-{
-    public static StringBuilder AppendLine( this StringBuilder @this, int lineCount )
-    {
-        for( var i = 0; i < lineCount; i++ ) @this.AppendLine();
-
-        return @this;
-    }
 }

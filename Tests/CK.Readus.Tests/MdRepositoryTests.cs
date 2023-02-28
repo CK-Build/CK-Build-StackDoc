@@ -41,8 +41,9 @@ internal class MdRepositoryTests : TestBase
         var factory = new MdRepositoryReader();
         var remoteUrl = string.Empty;
         var rootPath = tempPath;
+        var repositoryInfo = new RepositoryInfo( rootPath, remoteUrl );
 
-        var sut = factory.ReadPath( Monitor, rootPath, remoteUrl, default );
+        var sut = factory.ReadPath( Monitor, repositoryInfo, default );
 
         var outputFolder = ProjectFolder
                            .AppendPart( "Out" )

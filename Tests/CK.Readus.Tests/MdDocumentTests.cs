@@ -97,14 +97,14 @@ hello [link](linkToSomething).
 
         sut.TransformLinks( Monitor, Do );
         sut.Apply( Monitor );
-        calls.Should().Be( 3 );
+        calls.Should().Be( 2 );
 
         var transformedLinks = sut.MarkdownDocument.Descendants().OfType<LinkInline>().ToArray();
-        transformedLinks.Should().HaveCount( calls );
+        transformedLinks.Should().HaveCount( 3 );
 
         transformedLinks[0].Url.Should().Be( new NormalizedPath( "https://google.fr/AddedPart" ) );
         transformedLinks[1].Url.Should().Be( new NormalizedPath( "~/./Project/README.md/AddedPart" ) );
-        transformedLinks[2].Url.Should().Be( new NormalizedPath( "~/./Project/Code.cs/AddedPart" ) );
+        transformedLinks[2].Url.Should().Be( new NormalizedPath( "https://github.com/Invenietis/FooBarFakeRepo1/blob/master/Project/Code.cs" ) );
     }
 
     [Test]
@@ -114,14 +114,14 @@ hello [link](linkToSomething).
         // no point to change it. It is already well defined in our scope.
         // Indeed, that does not make much sense to work on a single file.
         var text = @"
-[click](../ServiceContainer/SimpleServiceContainer.cs)
+[click](../ServiceContainer/SimpleServiceContainer.md)
 ";
-        var virtualFile = $"{DummyRepository.RootPath}/CK.Core/AutomaticDI/README.md";
+        var virtualFile = $"{DummyRepository.LocalPath}/CK.Core/AutomaticDI/README.md";
         var sut = new MdDocument( text, virtualFile, DummyRepository );
 
         var expected = new NormalizedPath
         (
-            $@"{sut.VirtualLocation}/..\ServiceContainer\SimpleServiceContainer.cs"
+            $@"{sut.VirtualLocation}/..\ServiceContainer\SimpleServiceContainer.md"
         );
 
         NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
@@ -142,12 +142,14 @@ hello [link](linkToSomething).
     {
         get
         {
+            // @formatter:off
             yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\Project\README.md" ) );
             yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\Project\Code.cs" ) );
             yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\Project\SomeDocumentation.md" ) );
             yield return new TestCaseData( InFolder.Combine( @"SimpleStack\FooBarFakeRepo1\someFile" ) );
-            yield return new TestCaseData( new NormalizedPath(@"~/./Project/Code.cs" ) );
-            yield return new TestCaseData( new NormalizedPath(@"~/./Project/README.md)" ) );
+            yield return new TestCaseData( new NormalizedPath( @"~/./Project/Code.cs" ) );
+            yield return new TestCaseData( new NormalizedPath( @"~/./Project/README.md)" ) );
+            // @formatter:on
         }
     }
 
@@ -256,5 +258,22 @@ hello [link](linkToSomething).
         var result = document.TransformResolveVirtualRootAsConcretePath( Monitor, link );
 
         result.Should().Be( expected );
+    }
+
+    [Test]
+    public void TransformLinks_should_filter_out_code_links()
+    {
+        var sut = DummyDocument;
+
+        NormalizedPath Do( IActivityMonitor monitor, NormalizedPath path )
+        {
+            return "Whatever";
+        }
+
+        sut.TransformLinks( Monitor, Do );
+
+        sut.MarkdownBoundLinks[0].Current.Should().Be( "Whatever" );
+        sut.MarkdownBoundLinks[1].Current.Should().Be( "Whatever" );
+        sut.MarkdownBoundLinks[2].Current.Should().Be( "https://github.com/Invenietis/FooBarFakeRepo1/blob/master/Project/Code.cs" );
     }
 }

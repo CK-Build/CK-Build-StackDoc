@@ -10,18 +10,18 @@ namespace CK.Readus;
 internal class MdDocument
 {
     public MarkdownDocument MarkdownDocument { get; }
-    public NormalizedPath OriginPath { get; }
+    public NormalizedPath LocalPath { get; }
 
     /// <summary>
     /// Get the full path of the directory that contains this file
     /// </summary>
     /// <returns></returns>
-    public NormalizedPath Directory => OriginPath.RemoveLastPart();
+    public NormalizedPath Directory => LocalPath.RemoveLastPart();
 
     /// <summary>
     /// File name with extension
     /// </summary>
-    public string DocumentName => OriginPath.LastPart;
+    public string DocumentName => LocalPath.LastPart;
 
     /// <summary>
     /// File name without extension
@@ -46,33 +46,33 @@ internal class MdDocument
 
     public bool IsOk => IsError is false;
 
+    private NormalizedPath? _current;
+
     /// <summary>
-    /// TODO: Set the relative path and handle extension
-    /// See CK.Readus.MdRepository.Generate
-    ///
     /// Virtually rooted path
     /// </summary>
-    public NormalizedPath Current { get; set; }
+    public NormalizedPath Current
+    {
+        get
+        {
+            _current ??= Parent.Parent.Parent.AttachToVirtualRoot( LocalPath );
+            return _current.Value;
+        }
+        set => _current = value;
+    }
 
     /// <summary>
     /// Directory containing the file with a virtual root.
     /// </summary>
     public NormalizedPath VirtualLocation => Current.RemoveLastPart();
 
-    /// <summary>
-    /// Path relative to the the repository root.
-    /// </summary>
-    /// <returns></returns>
-    [Obsolete( "Use VirtualLocation instead" )]
-    public NormalizedPath RelativePath => Directory.RemoveFirstPart( Parent.RootPath.Parts.Count - 1 );
-
     internal MdDocument( string markdownText, NormalizedPath path, MdRepository mdRepository )
     {
         if( path.IsRelative() )
             throw new ArgumentException( $"{nameof( Path )} should be absolute" );
-        OriginPath = path;
+        LocalPath = path;
         Parent = mdRepository;
-        Current = Parent.Parent.Parent.AttachToVirtualRoot( OriginPath );
+        // Current = Parent.Parent.Parent.AttachToVirtualRoot( LocalPath );
 
         MarkdownDocument = Markdown.Parse( markdownText, MdContext.Pipeline );
         MarkdownBoundLinks = MarkdownDocument
@@ -136,6 +136,8 @@ internal class MdDocument
     {
         foreach( var link in MarkdownBoundLinks )
         {
+            if( link.LinkType == LinkType.InternalCode ) continue;
+
             var transformed = transform( monitor, link.Current );
 
             monitor.Info
@@ -199,7 +201,7 @@ internal class MdDocument
         {
             monitor.Fatal
             (
-                $"Invalid link: `{link}`(virtual representation) in document: `{OriginPath}`. Are you missing a target ?",
+                $"Invalid link: `{link}`(virtual representation) in document: `{LocalPath}`. Are you missing a target ?",
                 e
             );
             throw;
@@ -254,6 +256,37 @@ internal class MdDocument
             // Handle it somehow.
             // The check right up secure this but this is not what i want.
             link.MarkdownReference.Url = link.Current;
+        }
+    }
+
+    /// <summary>
+    /// For each link that target a code file, return it's path on disk, alongside with a virtual path.
+    /// </summary>
+    /// <param name="monitor"></param>
+    /// <returns>location file on disk and virtuallyRooted than can be resolved on output.</returns>
+    [Obsolete]
+    public IEnumerable<(NormalizedPath location, NormalizedPath virtuallyRooted)> GetLinkedCodeFiles( IActivityMonitor monitor )
+    {
+        foreach( var markdownBoundLink in MarkdownBoundLinks )
+        {
+            if( markdownBoundLink.LinkType is not LinkType.InternalCode ) continue;
+            var link = markdownBoundLink.Current;
+            var isVirtual = link.RootKind is NormalizedPathRootKind.RootedByFirstPart
+                         && link.FirstPart.Equals( "~" );
+            if( isVirtual is false ) continue;
+
+            // link target a code file that we have to copy.
+            var context = Parent.Parent.Parent;
+            var root = context.VirtualRoot;
+            var relativeLink = link.RemoveFirstPart();
+            Debug.Assert( relativeLink.IsRelative(), "relativeLink.IsRelative()" );
+
+            var targetLocation = root.Combine( relativeLink ).ResolveDots();
+            var targetDestination = context.AttachToVirtualRoot( targetLocation );
+            monitor.Info( $"`{targetLocation}` attached to `{targetDestination}`" );
+
+            yield return (targetLocation, targetDestination);
+            // We found our target, this has to be registered for copy to the output.
         }
     }
 }

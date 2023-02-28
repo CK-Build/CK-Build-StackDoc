@@ -48,6 +48,7 @@ public static class Program
 
         var repositories = new List<(NormalizedPath local, NormalizedPath remote)>
         {
+            // @formatter:off
             (ckCoreProjects.AppendPart( "CK-ActivityMonitor" ), "https://github.com/Invenietis/CK-ActivityMonitor"),
             (ckCoreProjects.AppendPart( "CK-Auth-Abstractions" ), "https://github.com/Invenietis/CK-Auth-Abstractions"),
             (ckCoreProjects.AppendPart( "CK-Core" ), "https://github.com/Invenietis/CK-Core"),
@@ -103,9 +104,20 @@ public static class Program
 
             (iot.AppendPart( "CK-MQTT" ), "https://github.com/signature-opensource/CK-MQTT"),
             (iot.AppendPart( "CK-Monitoring-MQTT" ), "https://github.com/Invenietis/CK-Monitoring-MQTT"),
+            // @formatter:on
         };
 
-        var context = new MdContext( "CK", repositories );
+        var world = new WorldInfo( "CK", "2023.02.27" );
+        var repositoriesInfo = repositories.Select( r => new RepositoryInfo( r.local, r.remote ) ).ToArray();
+
+        var context = new MdContextFactory().CreateContext
+        (
+            monitor,
+            new MdContextConfiguration() { EnableGitSupport = true, EnableLinkAvailabilityCheck = false }
+        );
+
+        await context.RegisterRepositoriesAsync( monitor, world, repositoriesInfo );
+
 
         context.SetOutputPath( outputFolder );
         await context.WriteHtmlAsync( monitor );
